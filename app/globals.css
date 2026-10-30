@@ -148,9 +148,9 @@ a { text-decoration: none; }
 .composer textarea { display: block; font-size: 16px; min-height: 39px; max-height: 130px; padding: 7px 5px 10px; line-height: 1.45; }
 @media (max-width: 850px) {
   html, body { overflow: hidden; }
-  .app-shell { height: 100dvh; min-height: 0; padding: 54px 8px 8px; overflow: hidden; position: relative; }
+  .app-shell { height: 100dvh; min-height: 0; padding: 68px 8px 8px; overflow: hidden; position: relative; }
   .workspace-main { height: 100%; min-height: 0; overflow: auto; transition: transform .2s ease; }
-  .mobile-topbar { display: flex; height: 48px; position: fixed; z-index: 25; inset: 0 0 auto; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 12px; background: #fffefa; border-bottom: 1px solid #e5e5e5; }
+  .mobile-topbar { display: flex; height: 60px; position: fixed; z-index: 25; inset: 0 0 auto; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 12px 12px; background: #fffefa; border-bottom: 1px solid #e5e5e5; }
   .mobile-title { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 16px; font-weight: 900; }
   .mobile-nav-trigger, .mobile-new-chat { display: grid; place-items: center; flex: none; width: 37px; height: 37px; background: white; box-shadow: 2px 3px 0 #111; }
   .mobile-new-chat { background: #ff8aa0; }
