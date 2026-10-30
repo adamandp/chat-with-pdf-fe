@@ -31,13 +31,13 @@ export function PdfViewer({ document, initialPage = 1, onClose, onExpand, expand
     <header className="pdf-panel-header">
       <div className="flex min-w-0 items-center gap-2"><FileText size={23} className="shrink-0" /><div className="min-w-0"><h2 className="truncate text-base font-black">{document.name}</h2><p className="text-xs">Page {safePage} of {pages}</p></div></div>
       <div className="flex shrink-0 items-center gap-2">
-        <button className="neo-button pdf-header-action" onClick={toggleExpand} title={isExpanded ? "Exit expanded PDF preview" : "Expand PDF preview"} aria-label={isExpanded ? "Exit expanded PDF preview" : "Expand PDF preview"}>{isExpanded ? <Shrink size={18} /> : <Expand size={18} />}</button>
+        <button className="neo-button pdf-header-action pdf-expand-button" onClick={toggleExpand} title={isExpanded ? "Exit expanded PDF preview" : "Expand PDF preview"} aria-label={isExpanded ? "Exit expanded PDF preview" : "Expand PDF preview"}>{isExpanded ? <Shrink size={18} /> : <Expand size={18} />}</button>
         <button className="neo-button pdf-header-action" onClick={close} aria-label="Close PDF preview"><X size={19} /></button>
       </div>
     </header>
     <div className="pdf-toolbar">
       <div className="pdf-page-controls">
-        <input aria-label="PDF page number" type="number" min={1} max={pages} value={safePage} onChange={(event) => setPage(Math.min(pages, Math.max(1, Number(event.target.value) || 1)))} className="w-11 rounded-md border border-black bg-[#ffe65b] px-1 py-1.5 text-center text-sm font-bold" />
+        <input aria-label="PDF page number" type="number" min={1} max={pages} value={safePage} onChange={(event) => setPage(Math.min(pages, Math.max(1, Number(event.target.value) || 1)))} className="pdf-page-number w-9 rounded-md border border-black bg-[#ffe65b] px-0.5 py-1 text-center text-sm font-bold" />
         <span className="whitespace-nowrap text-xs">/ {pages}</span>
         <button className="icon-button" aria-label="Previous page" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}><ChevronLeft size={18} /></button>
         <button className="icon-button" aria-label="Next page" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)}><ChevronRight size={18} /></button>
