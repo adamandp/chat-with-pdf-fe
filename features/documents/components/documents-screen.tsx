@@ -29,9 +29,10 @@ export function DocumentsScreen() {
   const [sort, setSort] = useState<"modified" | "name" | "pages">("modified");
   const [direction, setDirection] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
   const [preview, setPreview] = useState<PdfDocument | null>(null);
   const [toDelete, setToDelete] = useState<PdfDocument | null>(null);
-  const { data, isPending, isError, refetch } = useDocuments({ q: query, sort, direction, page, pageSize: 6 });
+  const { data, isPending, isError, refetch } = useDocuments({ q: query, sort, direction, page, pageSize });
   const { data: all } = useDocuments({ pageSize: 1 });
   const remove = useDeleteDocument();
   const count = all?.paging?.totalItems ?? data?.paging?.totalItems ?? 0;
@@ -89,7 +90,7 @@ export function DocumentsScreen() {
           <span className="doc-date flex items-center gap-2 text-sm text-muted"><CalendarDays size={17} /> {formattedDate(document.updatedAt)}</span>
           <DocumentActions document={document} onPreview={() => setPreview(document)} onDelete={() => setToDelete(document)} />
         </article>)}</div>)}
-    {data?.paging && <Pagination currentPage={data.paging.currentPage} totalPages={data.paging.totalPages} onChange={setPage} label="Document pages" />}
+    {data?.paging && <Pagination currentPage={data.paging.currentPage} totalPages={data.paging.totalPages} totalItems={data.paging.totalItems} pageSize={pageSize} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} onChange={setPage} label="Document pages" />}
     <PdfPreviewDialog document={preview} onClose={() => setPreview(null)} />
     <Dialog open={Boolean(toDelete)} onOpenChange={(open) => { if (!open) setToDelete(null); }}>
       <DialogContent className="neo-card bg-white p-6"><DialogHeader><DialogTitle>Move document to Trash?</DialogTitle><DialogDescription>{toDelete?.name} will be available to restore later.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" onClick={() => setToDelete(null)}>Cancel</Button><Button onClick={confirmDelete} disabled={remove.isPending} className="bg-[#ff788c]">Move to Trash</Button></DialogFooter></DialogContent>

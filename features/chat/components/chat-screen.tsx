@@ -90,7 +90,7 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
     </div>
     {preview && <>
       <div className="resize-handle" role="separator" aria-label="Resize chat and PDF panels" aria-orientation="vertical" tabIndex={0} 
-        onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); resize(event); }} onPointerMove={resize}
+        onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={resize}
         onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); setSideWidth((value) => Math.max(20, Math.min(40, value + (event.key === "ArrowLeft" ? 2 : -2)))); } }} />
       <PdfViewer key={`${preview.document.id}:${preview.page}`} document={preview.document} initialPage={preview.page} onClose={() => { setPreview(null); setExpanded(false); }} onExpand={() => setExpanded((value) => !value)} expanded={expanded} mobileOpen
         style={{ flex: `0 0 ${sideWidth}%` }} />

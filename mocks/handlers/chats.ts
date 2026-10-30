@@ -24,6 +24,9 @@ export const chatHandlers = [
     const question = String(payload.get("message") || "").trim();
     if (!question) return HttpResponse.json({ message: "A message is required" }, { status: 400 });
     const mode: AnswerMode = payload.get("mode") === "general" ? "general" : "document";
+    // The standalone demo accepts thinking mode; the simulated answer does not change reasoning effort.
+    const thinkingMode = String(payload.get("thinkingMode") || "quick");
+    if (!["quick", "pro", "ultra"].includes(thinkingMode)) return HttpResponse.json({ message: "Invalid thinking mode" }, { status: 400 });
     const sessionId = String(payload.get("sessionId") || "");
     let session = store.sessions.find((item) => item.id === sessionId && !item.deletedAt);
     let ids: string[] = [];

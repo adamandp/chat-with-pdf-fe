@@ -1,8 +1,10 @@
 import { FileText } from "lucide-react";
 import type { Accent } from "@/features/common/types";
 
+/** A single consistent document mark for grid, list, citations and the library. */
 export function PdfIcon({ accent = "pink", small = false }: { accent?: Accent; small?: boolean }) {
-  return <div aria-hidden="true" className={`pdf-icon ${accent} ${small ? "small" : ""}`}>
-    <span>PDF</span><FileText size={12} className="absolute bottom-1 right-1 opacity-60" />
-  </div>;
+  return <span aria-hidden="true" className={`pdf-icon ${accent} ${small ? "small" : ""}`}>
+    <FileText className="pdf-icon-glyph" strokeWidth={1.8} />
+    <span className="pdf-icon-label">PDF</span>
+  </span>;
 }
