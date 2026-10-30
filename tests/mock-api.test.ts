@@ -98,4 +98,29 @@ describe("MSW API contracts", () => {
     expect((await fetch(`${api}/sessions/${id}/restore`, { method: "POST" })).status).toBe(200);
     expect((await fetch(`${api}/sessions/${id}`)).status).toBe(200);
   });
+
+  test("presigned PUT and process cannot be skipped", async () => {
+    const res = await fetch(api + "/documents/presigned-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileName: "Upload contract.pdf" }),
+    });
+    expect(res.status).toBe(201);
+    const payload = await res.json() as { data: { document_id: string; upload_url: string } };
+    const id = payload.data.document_id;
+    expect((await fetch(api + "/documents/" + id + "/process", { method: "POST" })).status).toBe(409);
+    const uploaded = await fetch("http://localhost:3030" + payload.data.upload_url, {
+      method: "PUT", headers: { "Content-Type": "application/pdf" },
+      body: new Blob(["%PDF-1.4 mock"], { type: "application/pdf" }),
+    });
+    expect(uploaded.status).toBe(200);
+    expect((await fetch(api + "/documents/" + id + "/process", { method: "POST" })).status).toBe(200);
+    const mid = await fetch(api + "/documents/" + id);
+    const intermediate = await mid.json() as { data: { status: string } };
+    expect(["QUEUED", "PROCESSING"]).toContain(intermediate.data.status);
+    await new Promise(resolve => setTimeout(resolve, 900));
+    const ready = await fetch(api + "/documents/" + id);
+    expect((await ready.json() as { data: { status: string } }).data.status).toBe("READY");
+  });
+
 });

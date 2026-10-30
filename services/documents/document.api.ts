@@ -20,9 +20,3 @@ export async function restoreDocument(id: string) {
   const { data } = await axiosInstance.post<WebResponse<PdfDocument>>(`/documents/${id}/restore`);
   return data.data;
 }
-export async function uploadDocument(file: File) {
-  const form = new FormData();
-  form.append("file", file);
-  const { data } = await axiosInstance.post<WebResponse<PdfDocument>>("/documents", form);
-  return data.data;
-}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteDocument, restoreDocument, uploadDocument } from "./document.api";
+import { deleteDocument, restoreDocument } from "./document.api";
+import { uploadDocument, type DocumentUploadInput } from "./document-upload.api";
 import { documentKeys } from "./document.query";
 
 export function useDeleteDocument() {
@@ -23,7 +24,7 @@ export function useRestoreDocument() {
 export function useUploadDocument() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: uploadDocument,
+    mutationFn: (input: DocumentUploadInput) => uploadDocument(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: documentKeys.all }),
   });
 }

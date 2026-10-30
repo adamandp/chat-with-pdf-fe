@@ -32,6 +32,8 @@ export const chatHandlers = [
     let ids: string[] = [];
     try { ids = JSON.parse(String(payload.get("documentIds") || "[]")) as string[]; } catch { ids = []; }
     ids = ids.filter((id) => store.documents.some((doc) => doc.id === id && !doc.deletedAt));
+    if (ids.some((id) => store.documents.some((doc) => doc.id === id && doc.status && doc.status !== "READY")))
+      return HttpResponse.json({ message: "Wait for PDF processing to finish" }, { status: 409 });
     const now = new Date().toISOString();
     if (!session) {
       session = {
