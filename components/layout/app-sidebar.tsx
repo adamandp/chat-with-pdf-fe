@@ -93,9 +93,9 @@ export function AppSidebar() {
         </div>
         <Link href="/" title="New Chat" onClick={() => setMobileOpen(false)} className="neo-button pink sidebar-create-chat"><Plus size={21} strokeWidth={3} /><span className="sidebar-text">New Chat</span>{drafts.new && <span className="sidebar-draft-dot ml-auto" role="img" aria-label="New chat has unsent draft" />}</Link>
         <nav className="flex flex-col gap-1" aria-label="Workspace">
-          <Link href="/" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/" || pathname.startsWith("/chats") ? "active" : ""}`}><MessageSquare size={21} /><span className="sidebar-text">Chats</span></Link>
-          <Link href="/documents" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/documents" ? "active" : ""}`}><FileText size={21} /><span className="sidebar-text">Documents</span></Link>
-          <Link href="/trash" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/trash" ? "active" : ""}`}><Trash2 size={21} /><span className="sidebar-text">Trash</span></Link>
+          <Link href="/" aria-label="Chats" title="Chats" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/" || pathname.startsWith("/chats") ? "active" : ""}`}><MessageSquare size={21} /><span className="sidebar-text">Chats</span></Link>
+          <Link href="/documents" aria-label="Documents" title="Documents" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/documents" ? "active" : ""}`}><FileText size={21} /><span className="sidebar-text">Documents</span></Link>
+          <Link href="/trash" aria-label="Trash" title="Trash" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/trash" ? "active" : ""}`}><Trash2 size={21} /><span className="sidebar-text">Trash</span></Link>
         </nav>
         <div className="sidebar-divider sidebar-collapse-hide" />
         <label className="sidebar-search sidebar-collapse-hide"><Search size={18} className="text-muted" />

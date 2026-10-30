@@ -54,7 +54,7 @@ test("navy dark theme keeps accent colors and usable popup", async ({ page }) =>
   await page.goto("/chats/session-1");
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Account settings" }).click();
-  await page.getByRole("radio", { name: "Dark" }).click();
+  await page.getByRole("switch", { name: "Dark mode" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
   const color = await page.locator(".mobile-topbar").evaluate(element => getComputedStyle(element).backgroundColor);
   expect(color).toBe("rgb(38, 46, 61)");
