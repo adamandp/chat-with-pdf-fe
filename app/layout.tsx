@@ -3,6 +3,7 @@ import { MockProvider } from "@/providers/mock-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { Toaster } from "sonner";
 import "./globals.css";
+import "@/styles/chat-workspace.css";
 
 export const metadata: Metadata = {
   title: "Chat with PDF",

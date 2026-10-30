@@ -1,16 +1,15 @@
 "use client";
 
-import { ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { ChevronDown, FileText } from "lucide-react";
 import type { PdfDocument } from "@/features/common/types";
 import { relativeTime } from "@/lib/format";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-export function ChatHeader({ title, createdAt, attachments, collapsed, onToggle, onPreview, onHidePreview, hasPreview }: {
+export function ChatHeader({ title, createdAt, attachments, collapsed, onPreview, onHidePreview, hasPreview }: {
   title: string;
   createdAt?: string;
   attachments: PdfDocument[];
   collapsed: boolean;
-  onToggle: () => void;
   onPreview: (document: PdfDocument) => void;
   onHidePreview: () => void;
   hasPreview: boolean;
@@ -21,9 +20,6 @@ export function ChatHeader({ title, createdAt, attachments, collapsed, onToggle,
       {!collapsed && <p>{createdAt ? `${attachments.length} documents • Created ${relativeTime(createdAt)}` : "Upload a PDF and start exploring"}</p>}
     </div>
     <div className="chat-banner-actions">
-      <button type="button" className="neo-button chat-collapse-toggle" aria-label={collapsed ? "Expand chat header" : "Collapse chat header"} aria-expanded={!collapsed} onClick={onToggle}>
-        {collapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
-      </button>
       <DropdownMenu>
         <DropdownMenuTrigger className="neo-button flex items-center gap-2 bg-white px-3 py-2 text-sm" aria-label="Chat documents">
           <FileText size={19} /><span className="hidden sm:inline">Documents</span><ChevronDown size={16} />
