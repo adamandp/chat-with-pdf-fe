@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import "@/styles/chat-workspace.css";
 import "@/styles/mobile-viewport.css";
+import "@/styles/sidebar-sessions.css";
 
 export const metadata: Metadata = {
   title: "Chat with PDF",

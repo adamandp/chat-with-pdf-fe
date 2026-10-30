@@ -12,6 +12,7 @@ import { useDocuments } from "@/services/documents/document.query";
 import { ChatHeader } from "./chat-header";
 import { ChatMessage } from "./chat-message";
 import { ChatComposer } from "./chat-composer";
+import { getChatDraft, moveChatDraft, setChatDraft, useSessionDraft } from "../store/chat-drafts";
 import { PdfViewer } from "@/features/pdf/components/pdf-viewer";
 
 type Preview = { document: PdfDocument; page: number };
@@ -27,7 +28,7 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
   const { data: messages = [], isPending: messagesPending } = useMessages(sessionId);
   const { data: documentResponse } = useDocuments({ pageSize: 50 });
   const allDocuments = documentResponse?.data || [];
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useSessionDraft(sessionId);
   const [mode, setMode] = useState<AnswerMode>("document");
   const [thinking, setThinking] = useState<ThinkingMode>("quick");
   const [selectedOverride, setSelectedOverride] = useState<string[] | null>(null);
@@ -70,10 +71,17 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
   function sendMessage() {
     if (!draft.trim() || send.isPending) return;
     setHeaderCollapsed(true);
+    const sentDraft = draft;
     send.mutate({ sessionId, message: draft.trim(), mode, thinkingMode: thinking, documentIds: selectedIds }, {
       onSuccess: (response) => {
-        setDraft("");
-        if (!sessionId) router.push(`/chats/${response.session.id}`);
+        // Never delete a newer draft the user typed while the request was pending.
+        if (!sessionId) {
+          if (getChatDraft("new") !== sentDraft) moveChatDraft("new", response.session.id);
+          else setChatDraft("new", "");
+          router.push(`/chats/${response.session.id}`);
+        } else if (getChatDraft(sessionId) === sentDraft) {
+          setChatDraft(sessionId, "");
+        }
       },
       onError: () => toast.error("Could not send message. Your draft is still here."),
     });
