@@ -1,5 +1,5 @@
 import { delay, http, HttpResponse } from "msw";
-import type { AnswerMode, ChatMessage, Session, Source } from "@/features/common/types";
+import type { AnswerMode, ThinkingMode, ChatMessage, Session, Source } from "@/features/common/types";
 import { store } from "../data/store";
 
 function simulateAnswer(message: string, mode: AnswerMode, documentIds: string[]): { content: string; sources: Source[] } {
@@ -51,6 +51,30 @@ export const chatHandlers = [
     };
     store.messages.push(userMessage, assistantMessage);
     return HttpResponse.json({ data: { session, messages: [userMessage, assistantMessage] } }, { status: 201 });
+  }),
+  http.post("*/api/messages/:id/regenerate", async ({ params, request }) => {
+    await delay(400);
+    const target = store.messages.find((message) => message.id === params.id && message.role === "assistant");
+    if (!target) return HttpResponse.json({ message: "Assistant message not found" }, { status: 404 });
+    const session = store.sessions.find((item) => item.id === target.sessionId && !item.deletedAt);
+    if (!session) return HttpResponse.json({ message: "Session not found" }, { status: 404 });
+    const history = store.messages.filter((item) => item.sessionId === session.id);
+    const index = history.findIndex((message) => message.id === target.id);
+    const previousUser = history.slice(0, index).reverse().find((message) => message.role === "user");
+    if (!previousUser) return HttpResponse.json({ message: "Original question not found" }, { status: 422 });
+    const payload = await request.json().catch(() => ({})) as { mode?: AnswerMode; thinkingMode?: ThinkingMode };
+    if (payload.thinkingMode && !["quick", "pro", "ultra"].includes(payload.thinkingMode))
+      return HttpResponse.json({ message: "Invalid thinking mode" }, { status: 400 });
+    const mode: AnswerMode = payload.mode === "general" ? "general" : "document";
+    const next = (target.regenerationCount || 0) + 1;
+    const result = simulateAnswer(previousUser.content, mode, session.documentIds);
+    target.content = result.content + `\n\n*Regenerated demo response #${next} (thinking: ${payload.thinkingMode || "quick"}).* `;
+    target.sources = result.sources;
+    target.regenerationCount = next;
+    target.feedback = undefined;
+    target.createdAt = new Date().toISOString();
+    session.updatedAt = target.createdAt;
+    return HttpResponse.json({ data: target });
   }),
   http.patch("*/api/messages/:id", async ({ params, request }) => {
     const message = store.messages.find((item) => item.id === params.id && item.role === "user");

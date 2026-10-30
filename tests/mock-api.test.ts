@@ -6,6 +6,43 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterAll(() => server.close());
 
 describe("MSW API contracts", () => {
+  test("fork copies history through a selected message without mutating its source", async () => {
+    const before = await fetch(`${api}/sessions/session-1/chats`);
+    const original = (await before.json() as { data: { id: string }[] }).data;
+    const result = await fetch(`${api}/sessions/session-1/fork`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageId: original[0].id }),
+    });
+    expect(result.status).toBe(201);
+    const session = (await result.json() as { data: { id: string; forkedFromSessionId: string } }).data;
+    expect(session.forkedFromSessionId).toBe("session-1");
+    const forked = (await (await fetch(`${api}/sessions/${session.id}/chats`)).json() as { data: { id: string }[] }).data;
+    expect(forked.length).toBe(1);
+    expect(forked[0].id).not.toBe(original[0].id);
+    const unchanged = (await (await fetch(`${api}/sessions/session-1/chats`)).json() as { data: { id: string }[] }).data;
+    expect(unchanged.map(x => x.id)).toEqual(original.map(x => x.id));
+  });
+
+  test("regenerate changes only the selected assistant answer and increments revision", async () => {
+    const original = (await (await fetch(`${api}/sessions/session-1/chats`)).json() as {
+      data: { id: string; role: string; content: string }[];
+    }).data;
+    const target = original.find((message) => message.role === "assistant")!;
+    const response = await fetch(`${api}/messages/${target.id}/regenerate`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "document", thinkingMode: "pro" }),
+    });
+    expect(response.status).toBe(200);
+    const updated = (await response.json() as { data: { id: string; content: string; regenerationCount: number } }).data;
+    expect(updated.id).toBe(target.id);
+    expect(updated.content).not.toBe(target.content);
+    expect(updated.regenerationCount).toBeGreaterThanOrEqual(1);
+    const after = (await (await fetch(`${api}/sessions/session-1/chats`)).json() as {
+      data: { id: string; role: string; content: string }[];
+    }).data;
+    expect(after.length).toBe(original.length);
+    expect(after.find(x => x.role === "user")?.content).toBe(original.find(x => x.role === "user")?.content);
+  });
+
   test("document pagination and sorting return a consistent paging envelope", async () => {
     const response = await fetch(`${api}/documents?page=1&pageSize=6&sort=name&direction=asc`);
     expect(response.status).toBe(200);

@@ -24,3 +24,8 @@ export async function giveFeedback(messageId: string, rating: "up" | "down") {
   const { data } = await axiosInstance.post<WebResponse<ChatMessage>>("/feedback", { messageId, rating });
   return data.data;
 }
+
+export async function regenerateAnswer(messageId: string, options: { mode: AnswerMode; thinkingMode: ThinkingMode }) {
+  const { data } = await axiosInstance.post<WebResponse<ChatMessage>>(`/messages/${messageId}/regenerate`, options);
+  return data.data;
+}
