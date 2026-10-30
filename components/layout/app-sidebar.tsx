@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FileText, MessageSquare, Menu, PanelLeftClose, PanelLeftOpen, Plus, Search, Trash2, X } from "lucide-react";
 import { AccountPopover } from "./account-popover";
 import { ChatPdfLogo } from "@/components/brand/chat-pdf-logo";
@@ -13,23 +13,15 @@ import { toast } from "sonner";
 import { useSessions } from "@/services/sessions/session.query";
 import { useDeleteSession, useRenameSession, useForkSession } from "@/services/sessions/session.mutation";
 import type { Session } from "@/features/common/types";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toggleSidebarCollapsed, useSidebarCollapsed } from "@/features/sidebar/store/sidebar-preference";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
-  useEffect(() => {
-    try { setDesktopCollapsed(window.localStorage.getItem("chat-with-pdf:sidebar-collapsed") === "true"); } catch { /* disabled storage */ }
-  }, []);
-  function toggleDesktopSidebar() {
-    setDesktopCollapsed((current) => {
-      try { window.localStorage.setItem("chat-with-pdf:sidebar-collapsed", String(!current)); } catch { /* disabled storage */ }
-      return !current;
-    });
-  }
+  const desktopCollapsed = useSidebarCollapsed();
+  const toggleDesktopSidebar = toggleSidebarCollapsed;
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
   const { pinnedIds, togglePinned } = usePinnedSessions();
