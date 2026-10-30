@@ -24,7 +24,7 @@ export function ChatHeader({ title, createdAt, attachments, collapsed, onPreview
         <DropdownMenuTrigger className="neo-button flex items-center gap-2 bg-white px-3 py-2 text-sm" aria-label="Chat documents">
           <FileText size={19} /><span className="hidden sm:inline">Documents</span><ChevronDown size={16} />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={10} className="min-w-64 border-2 border-black bg-white p-2 shadow-lg">
+        <DropdownMenuContent align="end" sideOffset={10} className="chat-documents-menu min-w-64 border-2 border-black bg-popover p-2 shadow-lg">
           <div className="px-2 py-2 font-bold">Choose a document</div>
           {attachments.map((doc) => <DropdownMenuItem key={doc.id} onClick={() => onPreview(doc)}><FileText size={17} /><span className="max-w-56 truncate">{doc.name}</span></DropdownMenuItem>)}
           {!attachments.length && <p className="px-2 py-4 text-sm text-muted">Attach a document in the composer below.</p>}

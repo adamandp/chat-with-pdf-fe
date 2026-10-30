@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { FileText, MessageSquare, Menu, Plus, Search, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { FileText, MessageSquare, Menu, PanelLeftClose, PanelLeftOpen, Plus, Search, Trash2, X } from "lucide-react";
 import { AccountPopover } from "./account-popover";
 import { ChatPdfLogo } from "@/components/brand/chat-pdf-logo";
 import { SidebarSessionRow } from "./sidebar-session-row";
@@ -20,6 +20,16 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+  useEffect(() => {
+    try { setDesktopCollapsed(window.localStorage.getItem("chat-with-pdf:sidebar-collapsed") === "true"); } catch { /* disabled storage */ }
+  }, []);
+  function toggleDesktopSidebar() {
+    setDesktopCollapsed((current) => {
+      try { window.localStorage.setItem("chat-with-pdf:sidebar-collapsed", String(!current)); } catch { /* disabled storage */ }
+      return !current;
+    });
+  }
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
   const { pinnedIds, togglePinned } = usePinnedSessions();
@@ -75,37 +85,42 @@ export function AppSidebar() {
       <Link className="neo-button mobile-new-chat" href="/" aria-label="New Chat"><Plus size={21} /></Link>
     </div>
     {mobileOpen && <button className="sidebar-backdrop" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
-    <aside className={`sidebar ${mobileOpen ? "mobile-visible" : ""}`} aria-label="Main navigation"
+    <aside className={`sidebar ${mobileOpen ? "mobile-visible" : ""} ${desktopCollapsed ? "desktop-collapsed" : ""}`} aria-label="Main navigation"
       onTouchStart={(event) => { touchStart.current = event.touches[0]?.clientX ?? null; }}
       onTouchEnd={(event) => { if (touchStart.current !== null && touchStart.current - (event.changedTouches[0]?.clientX ?? touchStart.current) > 70) setMobileOpen(false); touchStart.current = null; }}>
       <div className="sidebar-body">
         <div className="brand">
           <ChatPdfLogo size={46} className="sidebar-brand-logo" />
-          <span>Chat with PDF</span>
+          <span className="sidebar-brand-title">Chat with PDF</span>
+          <button className="sidebar-desktop-toggle" type="button" onClick={toggleDesktopSidebar}
+            aria-label={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
+            {desktopCollapsed ? <PanelLeftOpen size={21} /> : <PanelLeftClose size={21} />}
+          </button>
           <button className="ml-auto icon-button mobile-close" aria-label="Close navigation" onClick={() => setMobileOpen(false)}><X size={20} /></button>
         </div>
-        <Link href="/" onClick={() => setMobileOpen(false)} className="neo-button pink sidebar-create-chat"><Plus size={21} strokeWidth={3} /> New Chat{drafts.new && <span className="sidebar-draft-dot ml-auto" role="img" aria-label="New chat has unsent draft" />}</Link>
+        <Link href="/" title="New Chat" onClick={() => setMobileOpen(false)} className="neo-button pink sidebar-create-chat"><Plus size={21} strokeWidth={3} /><span className="sidebar-text">New Chat</span>{drafts.new && <span className="sidebar-draft-dot ml-auto" role="img" aria-label="New chat has unsent draft" />}</Link>
         <nav className="flex flex-col gap-1" aria-label="Workspace">
-          <Link href="/" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/" || pathname.startsWith("/chats") ? "active" : ""}`}><MessageSquare size={21} /> Chats</Link>
-          <Link href="/documents" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/documents" ? "active" : ""}`}><FileText size={21} /> Documents</Link>
-          <Link href="/trash" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/trash" ? "active" : ""}`}><Trash2 size={21} /> Trash</Link>
+          <Link href="/" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/" || pathname.startsWith("/chats") ? "active" : ""}`}><MessageSquare size={21} /><span className="sidebar-text">Chats</span></Link>
+          <Link href="/documents" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/documents" ? "active" : ""}`}><FileText size={21} /><span className="sidebar-text">Documents</span></Link>
+          <Link href="/trash" onClick={() => setMobileOpen(false)} className={`nav-link ${pathname === "/trash" ? "active" : ""}`}><Trash2 size={21} /><span className="sidebar-text">Trash</span></Link>
         </nav>
-        <div className="sidebar-divider" />
-        <label className="sidebar-search"><Search size={18} className="text-muted" />
+        <div className="sidebar-divider sidebar-collapse-hide" />
+        <label className="sidebar-search sidebar-collapse-hide"><Search size={18} className="text-muted" />
           <input ref={searchRef} aria-label="Search recent chats" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search chats..." />
         </label>
-        {pinned.length > 0 && <section aria-label="Pinned chats" className="mt-4">
+        {pinned.length > 0 && <section aria-label="Pinned chats" className="mt-4 sidebar-collapse-hide">
           <h2 className="sidebar-section-title">Pinned</h2>
           {pinned.map(renderSession)}
         </section>}
-        <section aria-label="Recent chats" className="mt-4">
+        <section aria-label="Recent chats" className="mt-4 sidebar-collapse-hide">
           <h2 className="sidebar-section-title">Recents</h2>
           {recent.slice(0, expanded ? undefined : 6).map(renderSession)}
           {!recent.length && <p className="px-2 py-4 text-sm text-muted">No matching chats</p>}
           {recent.length > 6 && <button className="mt-2 px-2 text-sm font-bold hover:underline" onClick={() => setExpanded(!expanded)}>{expanded ? "See Less" : "See All"}</button>}
         </section>
       </div>
-      <div className="sidebar-footer"><AccountPopover /></div>
+      <div className="sidebar-footer"><AccountPopover collapsed={desktopCollapsed} /></div>
     </aside>
     <Dialog open={Boolean(renameId)} onOpenChange={(open) => { if (!open) setRenameId(null); }}>
       <DialogContent className="neo-card neo-dialog-compact bg-white p-5"><DialogHeader><DialogTitle>Rename Chat</DialogTitle><DialogDescription>Choose a descriptive title for this conversation.</DialogDescription></DialogHeader>

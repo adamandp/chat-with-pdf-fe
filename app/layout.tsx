@@ -11,6 +11,7 @@ import "@/styles/dark-theme.css";
 import "@/styles/compact-controls.css";
 import "@/styles/overlay-interaction.css";
 import "@/styles/pagination.css";
+import "@/styles/workspace-polish.css";
 
 export const metadata: Metadata = {
   title: "Chat with PDF",

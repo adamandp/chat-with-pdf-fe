@@ -1,0 +1,93 @@
+/* Workspace sizing: shadows remain inside the scrollport rather than being clipped.
+   Account/sidebar controls use a single horizontal layout at every breakpoint. */
+@media (min-width: 851px) {
+  .app-shell { min-height: 0; max-height: 100dvh; }
+  .workspace-main { min-width: 0; min-height: 0; padding: 0 10px 12px 1px; overflow-y: auto; overflow-x: hidden; }
+  .workspace-main:has(.chat-workspace) { overflow: hidden; padding: 0 9px 9px 1px; }
+  .chat-main { overflow: visible; padding: 0 5px 5px 0; }
+  .screen { padding: 0 3px 22px 1px; }
+  .banner { padding: 17px 24px; }
+  .banner h1 { font-size: clamp(24px, 2.35vw, 34px); letter-spacing: -1px; }
+  .chat-banner { padding: 12px 18px; }
+  .chat-banner h1 { font-size: clamp(20px, 1.85vw, 27px); }
+  .chat-banner.is-collapsed { padding: 12px 18px 15px; }
+  .chat-banner.is-collapsed h1 { font-size: clamp(17px, 1.45vw, 20px); }
+  .sidebar { transition: flex-basis .18s ease, width .18s ease; }
+  .sidebar.desktop-collapsed { flex: 0 0 76px; width: 76px; }
+  .sidebar.desktop-collapsed .sidebar-body { padding-inline: 10px; }
+  .sidebar.desktop-collapsed .sidebar-brand-title,
+  .sidebar.desktop-collapsed .sidebar-text,
+  .sidebar.desktop-collapsed .sidebar-collapse-hide,
+  .sidebar.desktop-collapsed .account-summary,
+  .sidebar.desktop-collapsed .account-chevron { display: none; }
+  .sidebar.desktop-collapsed .brand { flex-direction: column; gap: 14px; padding: 8px 2px 22px; }
+  .sidebar.desktop-collapsed .sidebar-brand-logo { width: 42px; height: 42px; }
+  .sidebar.desktop-collapsed .sidebar-create-chat { justify-content: center; padding: 11px 0; }
+  .sidebar.desktop-collapsed .nav-link { justify-content: center; padding: 14px 0; }
+  .sidebar.desktop-collapsed .sidebar-footer { padding: 14px 8px; }
+  .sidebar.desktop-collapsed .sidebar-account-trigger { justify-content: center; }
+}
+.sidebar-desktop-toggle { margin-left: auto; display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 8px; color: var(--foreground); }
+.sidebar-desktop-toggle:hover { background: var(--muted); }
+.sidebar-footer { display: block; padding: 12px 13px; min-width: 0; }
+.sidebar-account-trigger {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0;
+  min-height: 52px; padding: 5px; border: none; text-align: left;
+}
+.sidebar-account-trigger .account-avatar { width: 36px; height: 36px; box-shadow: 2px 2px 0 #111; }
+.account-summary { flex: 1 1 auto; display: block; min-width: 0; line-height: 1.35; }
+.account-summary strong, .account-summary small { display: block; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+.account-summary strong { font-size: 12px; }
+.account-summary small { font-size: 11px; color: var(--muted-foreground); }
+.account-chevron { flex: none; margin-left: auto; }
+.account-popover {
+  display: flex; flex-direction: column; gap: 0; width: min(305px, calc(100vw - 24px));
+  padding: 12px; background: var(--popover); color: var(--popover-foreground);
+  border: 2px solid #111; border-radius: 12px; box-shadow: 4px 5px 0 #111;
+}
+.account-profile { display: flex; align-items: center; gap: 11px; min-width: 0; padding-bottom: 12px; }
+.account-profile-info { flex: 1; min-width: 0; }
+.account-profile-info strong, .account-profile-info small { display: block; overflow-wrap: anywhere; }
+.account-profile-info strong { font-size: 13px; }
+.account-profile-info small { font-size: 11px; color: var(--muted-foreground); }
+.account-setting-row { border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 12px; }
+.account-setting-copy { min-width: 0; }
+.account-setting-copy strong, .account-setting-copy small { display: block; }
+.account-setting-copy strong { font-size: 13px; }
+.account-setting-copy small { font-size: 11px; color: var(--muted-foreground); line-height: 1.45; }
+.theme-switch { position: relative; flex: none; width: 51px; height: 28px; padding: 3px; border: 2px solid #111; border-radius: 999px; background: #c7d5e5; box-shadow: 2px 3px 0 #111; }
+.theme-switch.is-on { background: #ffe665; }
+.theme-switch-thumb { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 999px; background: white; color: #111; transition: transform .15s ease; }
+.theme-switch.is-on .theme-switch-thumb { transform: translateX(22px); }
+.account-hint { color: var(--muted-foreground); font-size: 10px; padding-top: 12px; }
+.dark .sidebar-footer { background: #293344; }
+.dark .sidebar-account-trigger:hover { background: #40516a; }
+.dark .sidebar-session-row.active.is-recent { color: #101820; }
+.dark .sidebar-session-row.active.is-recent .text-muted { color: #45566a; }
+.dark .sidebar-session-row.is-recent:hover:not(.active) { background: #44536a; color: #fff; }
+.dark .sidebar-session-row.is-recent:hover:not(.active) .text-muted { color: #cbd6e6; }
+.dark .sidebar-session-row.is-recent.active:hover { background: #9ac9ff; }
+.dark .sidebar-session-more:hover { color: #101820; background: #b3d9ff; }
+.dark .account-popover { background: #333d4d; color: #f4f5f9; }
+.dark .account-popover .account-profile-info small, .dark .account-popover .account-setting-copy small, .dark .account-hint { color: #c8d2df; }
+.chat-documents-menu [data-slot="dropdown-menu-item"] { color: var(--popover-foreground); }
+.chat-documents-menu [data-slot="dropdown-menu-item"]:hover { background: var(--accent); color: var(--accent-foreground); }
+.composer-popover-action { display:flex; align-items:center; gap: 12px; width:100%; min-height: 54px; padding: 8px; border-radius: 9px; text-align: left; color:var(--popover-foreground); }
+.composer-popover-action:hover { background: var(--accent); color: var(--accent-foreground); }
+.composer-popover-action small { color: var(--muted-foreground); }
+.composer-popover-action .composer-popover-icon { flex:none; display:grid; place-items:center; width: 39px; height:39px; border-radius: 10px; border: 2px solid #111; box-shadow:2px 3px 0 #111; color:#111; }
+.composer-popover-action .composer-popover-icon.pink { background:#ff788c; }
+.composer-popover-action .composer-popover-icon.yellow { background:#ffe665; }
+.composer-popover-action .composer-popover-copy { min-width:0; }
+.composer-popover-action .composer-popover-copy strong { display:block; font-size:13px; }
+.composer-popover-action .composer-popover-copy small { display:block; font-size:11px; }
+@media (max-width: 850px) {
+  .sidebar-desktop-toggle { display:none; }
+  .sidebar .sidebar-brand-title,.sidebar .sidebar-text,.sidebar .sidebar-collapse-hide,.sidebar .account-summary,.sidebar .account-chevron { display: revert; }
+  .sidebar-footer { padding: 12px; }
+  .workspace-main:not(:has(.chat-workspace)) { padding: 0 5px 20px 0; }
+  .workspace-main:has(.chat-workspace) { padding: 0 5px 7px 0; }
+  .chat-main { overflow: visible; padding: 0 4px 6px 0; }
+  .chat-banner.is-collapsed { padding: 10px 10px 13px; }
+}
+@media (prefers-reduced-motion: reduce) { .sidebar, .theme-switch-thumb { transition: none; } }
