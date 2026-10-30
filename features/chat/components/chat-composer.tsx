@@ -51,7 +51,7 @@ export function ChatComposer({ draft, setDraft, mode, setMode, thinking, setThin
       const doc = selectedDocuments?.data.find((item) => item.id === id);
       return <span key={id} className="composer-chip"><FileText size={14} /><span className="truncate">{doc?.name || "Selected PDF"}</span><button type="button" aria-label={`Remove ${doc?.name || "PDF"}`} onClick={() => setSelectedIds(selectedIds.filter((item) => item !== id))}><X size={14} /></button></span>;
     })}</div>}
-    <textarea aria-label="Your message" placeholder="Ask a question about your documents..." value={draft}
+    <textarea aria-label="Your message" placeholder="Ask about your PDFs..." value={draft}
       onChange={(event) => { setDraft(event.target.value); event.target.style.height = "auto"; event.target.style.height = Math.min(event.target.scrollHeight, 130) + "px"; }}
       onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && !window.matchMedia("(pointer: coarse)").matches) { event.preventDefault(); if (draft.trim() && !pending) onSend(); } }} rows={1} />
     <div className="composer-actions">
@@ -67,16 +67,36 @@ export function ChatComposer({ draft, setDraft, mode, setMode, thinking, setThin
       <span className="composer-spacer" />
       {upload.isPending && <span className="text-xs text-muted">Uploading…</span>}
       <Popover open={modeOpen} onOpenChange={setModeOpen}>
-        <PopoverTrigger aria-label="Answer Mode" className="neo-button composer-mode"><FileText size={17} /><span className="truncate">{mode === "document" ? "Document Only" : "General"}</span><ChevronDown size={15} className="shrink-0" /></PopoverTrigger>
+        <PopoverTrigger aria-label="Answer Mode" className="neo-button composer-mode" title={`Answer Mode: ${mode === "document" ? "Document Only" : "General Knowledge"} · ${selectedIds.length} PDFs attached`}>
+          {mode === "document" ? <FileText size={19} /> : <Bot size={19} />}
+          <span className="desktop-mode-label truncate">{mode === "document" ? "Document Only" : "General Knowledge"}</span>
+          <span className="composer-document-count" aria-label={`${selectedIds.length} attached PDFs`}>{selectedIds.length}</span>
+          <ChevronDown size={15} className="desktop-mode-label-arrow shrink-0" />
+        </PopoverTrigger>
         <PopoverContent side="top" align="end" sideOffset={10} className="w-[min(250px,calc(100vw-24px))] border-2 border-black bg-white p-2 shadow-[3px_4px_0_#111]">
           <h3 className="mb-1 px-2 text-sm font-black">Answer Mode</h3>
           {([{ value: "document", name: "Document Only", description: "Selected PDFs", icon: FileText }, { value: "general", name: "General Knowledge", description: "General information", icon: Bot }] as const).map((option) => <button key={option.value} className={`composer-option ${mode === option.value ? "selected" : ""}`} onClick={() => { setMode(option.value); setModeOpen(false); }}>
             <option.icon size={18} /><span className="flex-1"><strong className="block text-sm">{option.name}</strong><small className="text-muted">{option.description}</small></span>{mode === option.value && <Check size={16} />}
           </button>)}
+          {selectedIds.length > 0 && <div className="composer-selection-list">
+            <strong className="mb-1 block text-xs">Attached PDFs ({selectedIds.length})</strong>
+            {selectedIds.map((id) => {
+              const doc = selectedDocuments?.data.find((item) => item.id === id);
+              return <div key={id} className="composer-selection-item">
+                <FileText size={15} />
+                <span className="min-w-0 flex-1 truncate text-xs">{doc?.name || "Selected PDF"}</span>
+                <button type="button" aria-label={`Remove ${doc?.name || "PDF"}`} onClick={() => setSelectedIds(selectedIds.filter((item) => item !== id))}><X size={15} /></button>
+              </div>;
+            })}
+          </div>}
         </PopoverContent>
       </Popover>
       <Popover open={thinkingOpen} onOpenChange={setThinkingOpen}>
-        <PopoverTrigger aria-label="Thinking Mode" className="neo-button composer-thinking"><Zap size={16} /><span className="capitalize">{thinking}</span><ChevronDown size={14} /></PopoverTrigger>
+        <PopoverTrigger aria-label="Thinking Mode" className="neo-button composer-thinking" title={`Thinking Mode: ${thinking}`}>
+          <Zap size={18} />
+          <span className="desktop-thinking-label capitalize">{thinking}</span>
+          <ChevronDown size={14} className="desktop-thinking-arrow" />
+        </PopoverTrigger>
         <PopoverContent side="top" align="end" sideOffset={10} className="w-[min(226px,calc(100vw-24px))] border-2 border-black bg-white p-2 shadow-[3px_4px_0_#111]">
           <h3 className="mb-1 px-2 text-sm font-black">Thinking Mode</h3>
           {thinkingOptions.map((option) => <button key={option.value} className={`composer-option ${thinking === option.value ? "selected" : ""}`} onClick={() => { setThinking(option.value); setThinkingOpen(false); }}>
