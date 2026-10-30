@@ -34,3 +34,4 @@ export interface ChatMessage {
 }
 export interface ChatResponse { session: Session; messages: ChatMessage[] }
 export type AnswerMode = "document" | "general";
+export type ThinkingMode = "quick" | "pro" | "ultra";
