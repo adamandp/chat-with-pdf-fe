@@ -21,7 +21,7 @@ jobs:
       - run: bunx playwright install --with-deps chromium
       - run: bunx playwright test --reporter=line
       - run: bunx playwright install --with-deps webkit
-      - run: bunx playwright test tests/browser/popup-interaction.spec.ts tests/browser/feature-updates.spec.ts --browser=webkit --reporter=line
+      - run: bunx playwright test tests/browser/popup-interaction.spec.ts tests/browser/feature-updates.spec.ts tests/browser/touch-interaction.spec.ts --browser=webkit --reporter=line
       - uses: actions/upload-artifact@v4
         if: always()
         with:
