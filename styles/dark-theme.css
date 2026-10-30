@@ -1,0 +1,103 @@
+/* shadcn/ui class-based color tokens (next-themes adds .dark to <html>).
+   PDF page content stays white: only the surrounding viewer chrome changes. */
+.dark {
+  color-scheme: dark;
+  --background: #12151b;
+  --foreground: #f2f4f8;
+  --card: #212631;
+  --card-foreground: #f2f4f8;
+  --popover: #252a34;
+  --popover-foreground: #f2f4f8;
+  --primary: #60b8ff;
+  --primary-foreground: #0c1724;
+  --secondary: #ffe665;
+  --secondary-foreground: #13161c;
+  --muted: #2a303b;
+  --muted-foreground: #b4bdca;
+  --accent: #34445b;
+  --accent-foreground: #f5f6fa;
+  --border: #656c78;
+  --input: #656c78;
+  --ring: #7dcaff;
+}
+.dark body,
+.dark .app-shell,
+.dark .workspace-main,
+.dark .mobile-topbar { color: var(--foreground); background: var(--background); }
+.dark :is(.sidebar,.sidebar-body,.sidebar-footer) { color: var(--foreground); background: #181c24; }
+.dark .sidebar { border-color: #050608; }
+.dark .sidebar-footer { border-top-color: #444954; }
+.dark .nav-link { color: var(--foreground); }
+.dark .nav-link:hover { background: #303a47; }
+.dark .nav-link.active { color: #0b1520; background: #6ebaff; }
+.dark .sidebar-search,
+.dark .toolbar-field,
+.dark .composer,
+.dark .message-bubble,
+.dark .neo-card,
+.dark .history-section,
+.dark .document-card,
+.dark .document-row,
+.dark .pdf-panel { color: var(--foreground); background: var(--card); }
+.dark .sidebar-search input,
+.dark .toolbar-field input,
+.dark .composer textarea { color: var(--foreground); }
+.dark .sidebar-search input::placeholder,
+.dark .composer textarea::placeholder { color: #969eac; }
+.dark .text-muted { color: #b0bac8; }
+.dark .sidebar-divider { border-color: #4e5360; }
+.dark .sidebar-session-row.is-recent { color: var(--foreground); background: #242a35; }
+.dark .sidebar-session-row.is-recent:hover { background: #364256; }
+.dark .sidebar-session-row.is-pinned { color: var(--foreground); background: #272b35; border-color: #090a0c; }
+.dark .sidebar-session-row.active { color: #151820; background: #abd6ff; }
+.dark .sidebar-session-row.is-pinned.active { color: #151820; background: #fff0a4; }
+.dark .sidebar-session-row.active .text-muted { color: #48566a; }
+.dark .sidebar-session-more:hover { background: #424853; }
+.dark .banner { color: #12151b; }
+.dark .banner p { color: #262626; }
+.dark .message-line.user .message-bubble { color: #edf7ff; background: #275071; }
+.dark .message-bubble { border-color: #060708; box-shadow: 3px 4px 0 #050608; }
+.dark .composer { border-color: #060708; box-shadow: 4px 5px 0 #060708; }
+.dark .composer-chip { color: #eaf6ff; background: #273e57; border-color: #567fa5; }
+.dark .composer-mode { color: var(--foreground); background: #303640; }
+.dark .composer-thinking { color: #111; background: #ffe665; }
+.dark .composer-option.selected { color: var(--foreground); background: #334f71; border-color: #91caff; }
+.dark .composer-option:hover { color: var(--foreground); background: #354154; }
+.dark .neo-button:not(.yellow):not(.pink):not(.blue):not(.mint):not(.purple):not(.composer-thinking):not(.composer-send):not(.composer-attach) {
+  background: #313844; color: var(--foreground);
+}
+.dark .pink, .dark .blue, .dark .yellow, .dark .mint, .dark .purple, .dark .composer-send, .dark .composer-attach {
+  color: #10121a;
+}
+.dark .mobile-nav-trigger { color: var(--foreground); background: #313844; }
+.dark .mobile-new-chat { color: #10121a; background: #ff788c; }
+.dark .pdf-panel-header { color: #131820; background: #54b4ff; }
+.dark .pdf-toolbar,
+.dark .pdf-related { color: var(--foreground); background: #252b35; }
+.dark .pdf-canvas { background: #424853; }
+.dark .pdf-canvas canvas { background: white; }
+.dark .pdf-page-controls input { color: #111; background: #ffe665; }
+.dark .pdf-more,
+.dark .pdf-header-action { color: var(--foreground); background: #313844; }
+.dark :is(.bg-white, [data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="dialog-content"]) {
+  color: var(--foreground); background-color: var(--popover);
+}
+.dark :is(.bg-white, [data-slot="popover-content"], [data-slot="dropdown-menu-content"]) input,
+.dark [data-slot="dialog-content"] input { color: var(--foreground); }
+.dark .pagination button { color: var(--foreground); background: #313844; }
+.dark .pagination button:disabled { color: #8992a1; }
+.dark .pagination-size select { color: var(--foreground); background: #313844; }
+.dark .account-theme-option:hover { background: #394454; }
+.account-theme-option { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 8px; }
+.account-theme-option.selected { background: #e2efff; color: #131820; }
+.dark .account-theme-option.selected { background: #3c638b; color: #fff; }
+.sidebar-account-trigger { width: 100%; min-width: 0; display: flex; align-items: center; gap: 11px; padding: 2px; border-radius: 9px; }
+.sidebar-account-trigger:hover { background: #e3edfa; }
+.dark .sidebar-account-trigger:hover { background: #303b4b; }
+.dark .document-card .pdf-icon { color: #111; }
+.dark .history-row { border-bottom-color: #4a505b; }
+.dark .pill.analyzed { color: #15223b; }
+.dark .pill.pending { color: #17202f; }
+.dark .account-popover { border-color: #080808; }
+/* Preserve the bright neo-brutalist accent surfaces and their dark lettering. */
+.dark :is(.pink,.blue,.yellow,.mint,.purple):not(.message-bubble):not(.sidebar-session-row) { color: #10121a; }

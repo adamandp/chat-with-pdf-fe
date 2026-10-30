@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { FileText, MessageSquare, Menu, Plus, Search, Settings, Trash2, UserRound, X } from "lucide-react";
+import { FileText, MessageSquare, Menu, Plus, Search, Trash2, X } from "lucide-react";
+import { AccountPopover } from "./account-popover";
 import { ChatPdfLogo } from "@/components/brand/chat-pdf-logo";
 import { SidebarSessionRow } from "./sidebar-session-row";
 import { useChatDrafts } from "@/features/chat/store/chat-drafts";
@@ -100,7 +101,7 @@ export function AppSidebar() {
           {recent.length > 6 && <button className="mt-2 px-2 text-sm font-bold hover:underline" onClick={() => setExpanded(!expanded)}>{expanded ? "See Less" : "See All"}</button>}
         </section>
       </div>
-      <div className="sidebar-footer"><span className="avatar"><UserRound size={24} /></span><span className="min-w-0 flex-1 truncate font-bold">Guest workspace</span><button aria-label="Workspace settings" className="icon-button" onClick={() => toast.info("Demo workspace — settings are not connected yet.")}><Settings size={21} /></button></div>
+      <div className="sidebar-footer"><AccountPopover /></div>
     </aside>
     <Dialog open={Boolean(renameId)} onOpenChange={(open) => { if (!open) setRenameId(null); }}>
       <DialogContent className="neo-card bg-white p-5"><DialogHeader><DialogTitle>Rename Chat</DialogTitle><DialogDescription>Choose a descriptive title for this conversation.</DialogDescription></DialogHeader>
