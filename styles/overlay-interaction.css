@@ -1,0 +1,13 @@
+/* Menu/dialog interaction and consistent neo-brutalist dialogs. */
+.neo-dialog-compact { width: min(440px, calc(100vw - 32px)); max-width: none; min-width: 0; gap: 14px; padding: 20px; box-shadow: 4px 5px 0 #111; }
+.neo-dialog-compact [data-slot="dialog-title"] { font-size: 19px; font-weight: 900; line-height: 1.2; }
+.neo-dialog-compact [data-slot="dialog-header"] { gap: 5px; }
+.neo-dialog-compact [data-slot="dialog-description"] { line-height: 1.4; }
+.neo-dialog-compact .neo-dialog-input { height: 44px; width: 100%; min-width: 0; background: var(--card); color: var(--foreground); font-size: 16px; }
+.neo-dialog-compact [data-slot="dialog-footer"] { display: flex; flex-direction: row; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; border: none; background: transparent; }
+.neo-dialog-compact [data-slot="dialog-footer"] .neo-button { min-height: 38px; }
+.neo-dialog-compact [data-slot="dialog-close"] { border: 2px solid #111; border-radius: 8px; width: 29px; height: 29px; padding: 3px; background: var(--card); box-shadow: 2px 3px 0 #111; }
+@media (max-width: 620px) {
+  .neo-dialog-compact { padding: 16px; gap: 12px; }
+  .neo-dialog-compact [data-slot="dialog-footer"] { justify-content: flex-end; }
+}
