@@ -71,7 +71,7 @@ test("dark mobile drawer and composer remain in viewport", async ({ page }) => {
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Account settings" }).click();
   await page.getByRole("radio", { name: "Dark" }).click();
-  await page.getByRole("button", { name: "Close navigation" }).click();
+  await page.getByRole("complementary", { name: "Main navigation" }).getByRole("button", { name: "Close navigation" }).click();
   const geometry = await page.locator(".composer").evaluate(el => {
     const rect = el.getBoundingClientRect();
     return {left: rect.left, right: rect.right, viewport: document.documentElement.clientWidth};
