@@ -5,7 +5,8 @@ import { CalendarDays, Check, FileText, Grid2X2, List, MoreVertical, Search, Arr
 import { toast } from "sonner";
 import type { PdfDocument } from "@/features/common/types";
 import { formattedDate } from "@/lib/format";
-import { useDeleteDocument, useDocuments } from "@/services/documents/document.query";
+import { useDocuments } from "@/services/documents/document.query";
+import { useDeleteDocument } from "@/services/documents/document.mutation";
 import { PdfIcon } from "@/features/common/components/pdf-icon";
 import { Pagination } from "@/features/common/components/pagination";
 import { PdfPreviewDialog } from "@/features/pdf/components/pdf-preview-dialog";

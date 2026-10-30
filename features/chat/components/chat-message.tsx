@@ -5,7 +5,7 @@ import { Bot, Check, Copy, Pencil, ThumbsDown, ThumbsUp, UserRound, X } from "lu
 import { toast } from "sonner";
 import type { ChatMessage as Message, PdfDocument, Source } from "@/features/common/types";
 import { shortTime } from "@/lib/format";
-import { useEditMessage, useFeedback } from "@/services/chats/chat.query";
+import { useEditMessage, useFeedback } from "@/services/chats/chat.mutation";
 import { PdfIcon } from "@/features/common/components/pdf-icon";
 
 function RichText({ content, onCitation }: { content: string; onCitation: (index: number) => void }) {
