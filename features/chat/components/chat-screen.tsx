@@ -2,18 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, ChevronDown, FileText, Sparkles } from "lucide-react";
+import { Bot, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import type { AnswerMode, ThinkingMode, PdfDocument, Source } from "@/features/common/types";
 import { useSession } from "@/services/sessions/session.query";
 import { useMessages } from "@/services/chats/chat.query";
 import { useSendChat } from "@/services/chats/chat.mutation";
 import { useDocuments } from "@/services/documents/document.query";
-import { relativeTime } from "@/lib/format";
+import { ChatHeader } from "./chat-header";
 import { ChatMessage } from "./chat-message";
 import { ChatComposer } from "./chat-composer";
 import { PdfViewer } from "@/features/pdf/components/pdf-viewer";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 
 type Preview = { document: PdfDocument; page: number };
 const suggestions = ["Summarize the main findings", "Compare annual reports", "What are the key financial trends?"];
@@ -36,12 +36,21 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
   const setSelectedIds = setSelectedOverride;
   const [preview, setPreview] = useState<Preview | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const headerManuallyToggled = useRef(false);
   const [sideWidth, setSideWidth] = useState(35);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
   const send = useSendChat();
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages.length, send.isPending]);
+
+  function onThreadScroll() {
+    if (headerManuallyToggled.current) return;
+    const scrolled = (threadRef.current?.scrollTop || 0) > 72;
+    setHeaderCollapsed((previous) => previous === scrolled ? previous : scrolled);
+  }
 
   function openSource(source: Source) {
     const document = allDocuments.find((item) => item.id === source.documentId);
@@ -69,17 +78,8 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
 
   return <div ref={workspaceRef} className={`chat-workspace ${expanded && preview ? "preview-expanded" : ""}`}>
     <div className="chat-main">
-      <header className="banner chat-banner shrink-0"><div className="min-w-0"><h1 className="truncate">{session?.title || (sessionId ? "Conversation" : "New Chat")}</h1><p>{session ? `${attachments.length} documents • Created ${relativeTime(session.createdAt)}` : "Upload a PDF and start exploring"}</p></div>
-        <DropdownMenu><DropdownMenuTrigger className="neo-button flex items-center gap-2 bg-white px-4 py-3 text-sm"><FileText size={21} /> <span className="hidden sm:inline">Documents</span><ChevronDown size={17} /></DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={10} className="min-w-64 border-2 border-black bg-white p-2 shadow-lg">
-            <div className="px-2 py-2 font-bold">Choose a document</div>
-            {attachments.map((doc) => <DropdownMenuItem key={doc.id} onClick={() => setPreview({ document: doc, page: 1 })}><FileText size={17} /> <span className="max-w-56 truncate">{doc.name}</span></DropdownMenuItem>)}
-            {!attachments.length && <p className="px-2 py-4 text-sm text-muted">Attach a document in the composer below.</p>}
-            {preview && <DropdownMenuItem onClick={() => setPreview(null)}>Hide PDF viewer</DropdownMenuItem>}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
-      <div className="chat-thread" aria-live="polite">
+      <ChatHeader title={session?.title || (sessionId ? "Conversation" : "New Chat")} createdAt={session?.createdAt} attachments={attachments} collapsed={headerCollapsed} onToggle={() => { setHeaderCollapsed((value) => !value); headerManuallyToggled.current = true; }} onPreview={(document) => setPreview({ document, page: 1 })} onHidePreview={() => setPreview(null)} hasPreview={Boolean(preview)} />
+      <div className="chat-thread" ref={threadRef} onScroll={onThreadScroll} aria-live="polite">
         {sessionError && <p role="alert" className="p-10 text-center text-red-700">Chat not found or was deleted.</p>}
         {sessionId && messagesPending && <p role="status" className="p-10 text-center text-muted">Loading conversation...</p>}
         {!sessionId && <div className="mx-auto flex min-h-full max-w-2xl flex-col items-center justify-center gap-5 pb-10 text-center"><span className="neo-card yellow grid size-20 place-items-center shadow-none"><Sparkles size={40} /></span><h2 className="text-3xl font-black">Your documents, explained.</h2><p className="max-w-lg text-muted">Ask questions about your PDFs, compare reports, and jump directly to the pages behind each answer.</p><div className="flex flex-wrap justify-center gap-2">{suggestions.map((suggestion) => <button key={suggestion} className="rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-bold hover:bg-[#ffe65b]" onClick={() => setDraft(suggestion)}>{suggestion}</button>)}</div><p className="text-xs text-muted">Demo mode: chat answers are simulated. No real AI is connected yet.</p></div>}

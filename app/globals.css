@@ -252,3 +252,47 @@ a { text-decoration: none; }
   .pdf-toolbar { font-size: 11px; }
   .pdf-page-controls button, .pdf-zoom-controls button { padding: 5px; }
 }
+
+/* Chat workspace layout correction: avoid viewport overflow and overlapping sticky elements. */
+html, body { max-width: 100%; }
+.app-shell, .workspace-main, .chat-workspace, .chat-main, .chat-thread { min-width: 0; }
+.chat-main { overflow: hidden; }
+.chat-banner { position: relative; z-index: 2; margin-bottom: 8px; transition: padding .18s ease, min-height .18s ease; }
+.chat-banner h1 { font-size: clamp(21px, 2.1vw, 30px); line-height: 1.2; }
+.chat-banner-title { flex: 1 1 auto; }
+.chat-banner-actions { display: flex; flex: none; align-items: center; gap: 8px; }
+.chat-collapse-toggle { display: grid; width: 34px; height: 34px; place-items: center; background: white; }
+.chat-banner.is-collapsed { padding-top: 8px; padding-bottom: 8px; min-height: 50px; }
+.chat-banner.is-collapsed h1 { font-size: clamp(17px, 1.6vw, 22px); }
+.chat-thread { position: relative; z-index: 1; overflow-x: hidden; overscroll-behavior-x: none; }
+.message-line { min-width: 0; max-width: 100%; }
+.message-line > div { min-width: 0; max-width: calc(100% - 44px); }
+.message-bubble { overflow-wrap: anywhere; }
+.source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.source-card { width: 100%; min-width: 0; max-width: 100%; }
+.source-card .pdf-icon { width: 40px; height: 43px; }
+.source-card .pdf-icon-glyph { width: 20px; height: 20px; }
+.source-card .pdf-icon-label { font-size: 10px; }
+.source-card strong { max-width: 100%; }
+@media (max-width: 850px) {
+  .app-shell { width: 100%; max-width: 100%; }
+  .workspace-main { width: 100%; }
+  .chat-workspace { width: 100%; }
+  .chat-banner { margin-bottom: 9px; min-height: 0; }
+  .chat-banner h1 { font-size: clamp(18px, 4.7vw, 24px); }
+  .chat-banner.is-collapsed { padding: 8px 10px; }
+  .chat-banner.is-collapsed h1 { font-size: 17px; }
+  .chat-collapse-toggle { width: 31px; height: 31px; box-shadow: 2px 3px 0 #111; }
+  .chat-banner-actions { gap: 6px; }
+  .chat-thread { padding-top: 15px; }
+  .message-line > div { max-width: calc(100% - 40px); }
+  .source-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .source-card { max-width: 100%; }
+  .composer { max-width: calc(100% - 4px); min-width: 0; }
+  .composer-actions { max-width: 100%; }
+  .composer-documents { max-width: 100%; }
+}
+@media (min-width: 851px) {
+  .chat-banner { padding: 15px 20px; }
+  .chat-banner.is-collapsed { padding: 8px 18px; }
+}
