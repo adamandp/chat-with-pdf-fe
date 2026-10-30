@@ -1,8 +1,37 @@
 import { delay, http, HttpResponse } from "msw";
-import type { Session } from "@/features/common/types";
+import type { ChatMessage, Session } from "@/features/common/types";
 import { store } from "../data/store";
 
 export const sessionHandlers = [
+  http.post("*/api/sessions/:id/fork", async ({ params, request }) => {
+    await delay(120);
+    const source = store.sessions.find((item) => item.id === params.id && !item.deletedAt);
+    if (!source) return HttpResponse.json({ message: "Source session not found" }, { status: 404 });
+    const { messageId } = await request.json().catch(() => ({})) as { messageId?: string };
+    const originals = store.messages.filter((message) => message.sessionId === source.id);
+    const cutIndex = messageId ? originals.findIndex((message) => message.id === messageId) : originals.length - 1;
+    if (messageId && cutIndex < 0) return HttpResponse.json({ message: "Message not found in source session" }, { status: 404 });
+    const now = new Date().toISOString();
+    const fork: Session = {
+      id: crypto.randomUUID(),
+      title: `Fork: ${source.title}`.slice(0, 120),
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+      documentIds: [...source.documentIds],
+      forkedFromSessionId: source.id,
+      ...(messageId ? { forkedFromMessageId: messageId } : {}),
+    };
+    const cloned: ChatMessage[] = originals.slice(0, cutIndex + 1).map((message) => ({
+      ...message,
+      id: crypto.randomUUID(),
+      sessionId: fork.id,
+      sources: message.sources.map((item) => ({ ...item })),
+    }));
+    store.sessions.unshift(fork);
+    store.messages.push(...cloned);
+    return HttpResponse.json({ data: fork }, { status: 201 });
+  }),
   http.get("*/api/sessions", async ({ request }) => {
     await delay(130);
     const url = new URL(request.url);

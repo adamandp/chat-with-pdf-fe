@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Check, Copy, Pencil, ThumbsDown, ThumbsUp, UserRound, X } from "lucide-react";
+import { Bot, Check, Copy, GitFork, Pencil, RefreshCcw, ThumbsDown, ThumbsUp, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import type { ChatMessage as Message, PdfDocument, Source } from "@/features/common/types";
 import { shortTime } from "@/lib/format";
@@ -28,8 +28,9 @@ function RichText({ content, onCitation }: { content: string; onCitation: (index
   })}</div>;
 }
 
-export function ChatMessage({ message, documents, onSource }: {
+export function ChatMessage({ message, documents, onSource, onFork, onRegenerate, forking = false, regenerating = false }: {
   message: Message; documents: PdfDocument[]; onSource: (source: Source) => void;
+  onFork?: () => void; onRegenerate?: () => void; forking?: boolean; regenerating?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.content);
@@ -58,7 +59,7 @@ export function ChatMessage({ message, documents, onSource }: {
           if (!doc) return null;
           return <button key={`${source.documentId}-${source.page}`} className={`source-card flex min-w-0 items-center gap-2 rounded-lg border-2 px-2 py-1.5 text-left text-xs hover:brightness-95 ${doc.accent}`} onClick={() => onSource(source)}><PdfIcon accent={doc.accent} small /><span className="min-w-0"><strong className="block max-w-36 truncate">{doc.name}</strong><span>Page {source.page}</span></span></button>;
         })}</div></div>}
-        <div className="mt-2 text-right text-xs text-muted">{shortTime(message.createdAt)}</div>
+        <div className="mt-2 text-right text-xs text-muted">{message.regenerationCount ? `Regenerated ${message.regenerationCount} · ` : ""}{shortTime(message.createdAt)}</div>
       </div>
       {!editing && <div className="flex items-center gap-2 px-1">
         {isUser ? <button title="Edit message" aria-label="Edit message" className="icon-button" onClick={() => { setDraft(message.content); setEditing(true); }}><Pencil size={17} /></button> : <>
@@ -66,6 +67,8 @@ export function ChatMessage({ message, documents, onSource }: {
           <button aria-label="Poor response" title="Poor response" className={`icon-button ${message.feedback === "down" ? "bg-blue-200" : ""}`} onClick={() => feedback.mutate({ id: message.id, rating: "down" })}><ThumbsDown size={17} /></button>
         </>}
         <button aria-label="Copy message" title="Copy message" className="icon-button" onClick={copy}><Copy size={17} /></button>
+        {onFork && <button aria-label="Fork chat from this message" title="Fork from here" disabled={forking} className="icon-button" onClick={onFork}><GitFork size={17} /></button>}
+        {onRegenerate && <button aria-label="Regenerate answer" title="Regenerate answer" disabled={regenerating} className="icon-button" onClick={onRegenerate}><RefreshCcw size={17} className={regenerating ? "animate-spin" : ""} /></button>}
       </div>}
     </div>
     {isUser && <span className="avatar"><UserRound size={27} /></span>}

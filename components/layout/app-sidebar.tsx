@@ -11,11 +11,10 @@ import { useChatDrafts } from "@/features/chat/store/chat-drafts";
 import { usePinnedSessions } from "@/features/sessions/hooks/use-pinned-sessions";
 import { toast } from "sonner";
 import { useSessions } from "@/services/sessions/session.query";
-import { useDeleteSession, useRenameSession } from "@/services/sessions/session.mutation";
+import { useDeleteSession, useRenameSession, useForkSession } from "@/services/sessions/session.mutation";
 import type { Session } from "@/features/common/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -33,6 +32,7 @@ export function AppSidebar() {
   const { data: sessions = [] } = useSessions(false, search);
   const rename = useRenameSession();
   const remove = useDeleteSession();
+  const fork = useForkSession();
   const activeSession = pathname.startsWith("/chats/") ? pathname.split("/")[2] : null;
   const pinned = sessions.filter((session) => pinnedIds.includes(session.id));
   const recent = sessions.filter((session) => !pinnedIds.includes(session.id));
@@ -62,6 +62,10 @@ export function AppSidebar() {
       onPin={() => togglePinned(session.id)}
       onRename={() => { setRenameId(session.id); setRenameValue(session.title); }}
       onDelete={() => setDeleteId(session.id)}
+      onFork={() => fork.mutate({ id: session.id }, {
+        onSuccess: (created) => { toast.success("Chat forked"); setMobileOpen(false); router.push(`/chats/${created.id}`); },
+        onError: () => toast.error("Could not fork chat"),
+      })}
     />;
   }
   return <>
@@ -104,14 +108,14 @@ export function AppSidebar() {
       <div className="sidebar-footer"><AccountPopover /></div>
     </aside>
     <Dialog open={Boolean(renameId)} onOpenChange={(open) => { if (!open) setRenameId(null); }}>
-      <DialogContent className="neo-card bg-white p-5"><DialogHeader><DialogTitle>Rename Chat</DialogTitle><DialogDescription>Choose a descriptive title for this conversation.</DialogDescription></DialogHeader>
-        <input autoFocus className="rounded-md border-2 border-black px-3 py-2" aria-label="Chat title" value={renameValue} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") saveRename(); }} />
-        <DialogFooter><Button variant="outline" onClick={() => setRenameId(null)}>Cancel</Button><Button disabled={!renameValue.trim() || rename.isPending} onClick={saveRename}>Save</Button></DialogFooter>
+      <DialogContent className="neo-card neo-dialog-compact bg-white p-5"><DialogHeader><DialogTitle>Rename Chat</DialogTitle><DialogDescription>Choose a descriptive title for this conversation.</DialogDescription></DialogHeader>
+        <input autoFocus className="neo-dialog-input rounded-md border-2 border-black px-3 py-2" aria-label="Chat title" value={renameValue} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") saveRename(); }} />
+        <DialogFooter><button className="neo-button bg-white px-4 py-2 text-sm" onClick={() => setRenameId(null)}>Cancel</button><button className="neo-button blue px-4 py-2 text-sm" disabled={!renameValue.trim() || rename.isPending} onClick={saveRename}>Save</button></DialogFooter>
       </DialogContent>
     </Dialog>
     <Dialog open={Boolean(deleteId)} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
-      <DialogContent className="neo-card bg-white p-5"><DialogHeader><DialogTitle>Move chat to Trash?</DialogTitle><DialogDescription>You can restore it later from the Trash page.</DialogDescription></DialogHeader>
-        <DialogFooter><Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button><Button onClick={deleteChat} disabled={remove.isPending} className="bg-[#ff788c]">Move to Trash</Button></DialogFooter>
+      <DialogContent className="neo-card neo-dialog-compact bg-white p-5"><DialogHeader><DialogTitle>Move chat to Trash?</DialogTitle><DialogDescription>You can restore it later from the Trash page.</DialogDescription></DialogHeader>
+        <DialogFooter><button className="neo-button bg-white px-4 py-2 text-sm" onClick={() => setDeleteId(null)}>Cancel</button><button onClick={deleteChat} disabled={remove.isPending} className="neo-button pink px-4 py-2 text-sm">Move to Trash</button></DialogFooter>
       </DialogContent>
     </Dialog>
   </>;

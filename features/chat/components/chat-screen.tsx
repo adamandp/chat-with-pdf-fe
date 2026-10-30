@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import type { AnswerMode, ThinkingMode, PdfDocument, Source } from "@/features/common/types";
 import { useSession } from "@/services/sessions/session.query";
 import { useMessages } from "@/services/chats/chat.query";
-import { useSendChat } from "@/services/chats/chat.mutation";
+import { useRegenerateAnswer, useSendChat } from "@/services/chats/chat.mutation";
+import { useForkSession } from "@/services/sessions/session.mutation";
 import { useDocuments } from "@/services/documents/document.query";
 import { ChatHeader } from "./chat-header";
 import { ChatMessage } from "./chat-message";
@@ -41,6 +42,8 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
   const workspaceRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const send = useSendChat();
+  const fork = useForkSession();
+  const regenerate = useRegenerateAnswer();
 
   // Scroll only the chat thread. scrollIntoView() also scrolls outer ancestors on iOS,
   // which caused the banner to overlap messages and shift the viewport.
@@ -86,6 +89,20 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
       onError: () => toast.error("Could not send message. Your draft is still here."),
     });
   }
+  function forkAt(messageId: string) {
+    if (!sessionId || fork.isPending) return;
+    fork.mutate({ id: sessionId, messageId }, {
+      onSuccess: (created) => { toast.success("Forked into a new conversation"); router.push(`/chats/${created.id}`); },
+      onError: () => toast.error("Could not fork chat"),
+    });
+  }
+  function regenerateAt(messageId: string) {
+    if (!sessionId || regenerate.isPending) return;
+    regenerate.mutate({ messageId, mode, thinkingMode: thinking }, {
+      onSuccess: () => toast.success("Response regenerated"),
+      onError: () => toast.error("Could not regenerate response"),
+    });
+  }
   function resize(event: React.PointerEvent<HTMLDivElement>) {
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
     const bounds = workspaceRef.current?.getBoundingClientRect();
@@ -102,7 +119,10 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
         {sessionError && <p role="alert" className="p-10 text-center text-red-700">Chat not found or was deleted.</p>}
         {sessionId && messagesPending && <p role="status" className="p-10 text-center text-muted">Loading conversation...</p>}
         {!sessionId && <div className="mx-auto flex min-h-full max-w-2xl flex-col items-center justify-center gap-5 pb-10 text-center"><span className="neo-card yellow grid size-20 place-items-center shadow-none"><Sparkles size={40} /></span><h2 className="text-3xl font-black">Your documents, explained.</h2><p className="max-w-lg text-muted">Ask questions about your PDFs, compare reports, and jump directly to the pages behind each answer.</p><div className="flex flex-wrap justify-center gap-2">{suggestions.map((suggestion) => <button key={suggestion} className="rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-bold hover:bg-[#ffe65b]" onClick={() => setDraft(suggestion)}>{suggestion}</button>)}</div><p className="text-xs text-muted">Demo mode: chat answers are simulated. No real AI is connected yet.</p></div>}
-        {messages.map((message) => <ChatMessage key={message.id} message={message} documents={allDocuments} onSource={openSource} />)}
+        {messages.map((message) => <ChatMessage key={message.id} message={message} documents={allDocuments} onSource={openSource}
+          onFork={() => forkAt(message.id)} forking={fork.isPending && fork.variables?.messageId === message.id}
+          onRegenerate={message.role === "assistant" ? () => regenerateAt(message.id) : undefined}
+          regenerating={regenerate.isPending && regenerate.variables?.messageId === message.id} />)}
         {send.isPending && <div className="message-line"><span className="avatar bot"><Bot size={25} /></span><div className="message-bubble text-muted" role="status">Thinking about your question…</div></div>}
       </div>
       <ChatComposer draft={draft} setDraft={setDraft} mode={mode} setMode={setMode} thinking={thinking} setThinking={setThinking} selectedIds={selectedIds} setSelectedIds={setSelectedIds} onSend={sendMessage} pending={send.isPending} />

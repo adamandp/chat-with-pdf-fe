@@ -8,6 +8,8 @@ export interface Session {
   updatedAt: string;
   deletedAt: string | null;
   documentIds: string[];
+  forkedFromSessionId?: string;
+  forkedFromMessageId?: string;
 }
 export interface PdfDocument {
   id: string;
@@ -31,6 +33,7 @@ export interface ChatMessage {
   createdAt: string;
   sources: Source[];
   feedback?: "up" | "down";
+  regenerationCount?: number;
 }
 export interface ChatResponse { session: Session; messages: ChatMessage[] }
 export type AnswerMode = "document" | "general";

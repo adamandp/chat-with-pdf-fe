@@ -9,6 +9,8 @@ import "@/styles/mobile-viewport.css";
 import "@/styles/sidebar-sessions.css";
 import "@/styles/dark-theme.css";
 import "@/styles/compact-controls.css";
+import "@/styles/overlay-interaction.css";
+import "@/styles/pagination.css";
 
 export const metadata: Metadata = {
   title: "Chat with PDF",
