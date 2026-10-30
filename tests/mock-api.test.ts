@@ -30,6 +30,22 @@ describe("MSW API contracts", () => {
     expect(docResult.data.length).toBe(1);
   });
 
+  test("thinking mode is accepted independently of answer mode", async () => {
+    for (const thinkingMode of ["quick", "pro", "ultra"]) {
+      const form = new FormData();
+      form.append("message", "Test " + thinkingMode);
+      form.append("mode", "general");
+      form.append("thinkingMode", thinkingMode);
+      form.append("documentIds", "[]");
+      const response = await fetch(`${api}/chats`, { method: "POST", body: form });
+      expect(response.status).toBe(201);
+    }
+    const invalid = new FormData();
+    invalid.append("message", "invalid mode");
+    invalid.append("thinkingMode", "nonexistent");
+    expect((await fetch(`${api}/chats`, { method: "POST", body: invalid })).status).toBe(400);
+  });
+
   test("chat send, soft delete, and restore preserve the session", async () => {
     const form = new FormData();
     form.append("message", "Summarize the annual report");
