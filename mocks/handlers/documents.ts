@@ -1,5 +1,4 @@
 import { delay, http, HttpResponse } from "msw";
-import type { PdfDocument } from "@/features/common/types";
 import { paginate, store } from "../data/store";
 
 export const documentHandlers = [
@@ -67,22 +66,6 @@ export const documentHandlers = [
       doc.analyzed = doc.status === "READY";
     }
     return HttpResponse.json({ data: doc });
-  }),
-  http.post("*/api/documents", async ({ request }) => {
-    const payload = await request.formData();
-    const file = payload.get("file");
-    if (!(file instanceof File) || file.type !== "application/pdf")
-      return HttpResponse.json({ message: "Only PDF files are supported" }, { status: 400 });
-    if (file.size > 20 * 1024 * 1024)
-      return HttpResponse.json({ message: "PDF must be under 20 MB" }, { status: 400 });
-    const now = new Date().toISOString();
-    const document: PdfDocument = {
-      id: crypto.randomUUID(), name: file.name, description: "Uploaded PDF document", pages: 1,
-      size: `${(file.size / 1048576).toFixed(2)} MB`, accent: "blue", analyzed: false,
-      createdAt: now, updatedAt: now, deletedAt: null,
-    };
-    store.documents.unshift(document);
-    return HttpResponse.json({ data: document }, { status: 201 });
   }),
   http.delete("*/api/documents/:id", ({ params, request }) => {
     const index = store.documents.findIndex((item) => item.id === params.id);
