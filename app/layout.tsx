@@ -4,6 +4,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { Toaster } from "sonner";
 import "./globals.css";
 import "@/styles/chat-workspace.css";
+import "@/styles/mobile-viewport.css";
 
 export const metadata: Metadata = {
   title: "Chat with PDF",

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "bun test tests/mock-api.test.ts",
+    "test": "bun test tests/mock-api.test.ts tests/mobile-viewport.test.ts",
     "test:e2e": "playwright test",
     "generate:pdf": "node scripts/generate-demo-pdfs.mjs",
     "postinstall": "node scripts/sync-pdf-worker.mjs"

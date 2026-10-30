@@ -61,3 +61,24 @@ test("header collapses while chatting and expands at the top with no manual togg
   });
   await expect(header).not.toHaveClass(/is-collapsed/);
 });
+
+test("mobile composer returns to bottom after viewport and focus cycles", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/chats/session-1");
+  await expect(page.locator(".composer")).toBeVisible();
+  await page.getByRole("textbox", { name: "Your message" }).focus();
+
+  await page.setViewportSize({ width: 390, height: 480 });
+  await expect.poll(() => page.locator(".composer").evaluate((node) => Math.round(node.getBoundingClientRect().bottom)))
+    .toBeLessThan(480);
+
+  await page.getByRole("textbox", { name: "Your message" }).blur();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const geometry = await page.locator(".composer").evaluate((node) => ({
+    bottom: node.getBoundingClientRect().bottom,
+    viewport: window.innerHeight,
+    shell: document.querySelector(".app-shell")?.getBoundingClientRect().height,
+  }));
+  expect(geometry.viewport - geometry.bottom).toBeLessThan(60);
+  expect(geometry.shell).toBeGreaterThan(700);
+});
