@@ -17,6 +17,7 @@ test("desktop sidebar collapses into rail and account switch stays usable", asyn
   await page.getByRole("button", { name: "Account settings" }).click();
   await page.getByRole("button", { name: "Expand sidebar" }).click();
   await expect(sidebar).not.toHaveClass(/desktop-collapsed/);
+  await expect.poll(async () => (await sidebar.boundingBox())?.width ?? 0).toBeGreaterThan(200);
   await page.screenshot({ path: "test-results/sidebar-expanded-dark.png" });
 });
 
@@ -55,6 +56,7 @@ for (const pathname of ["/", "/chats/session-1", "/documents", "/trash"]) {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(pathname);
     if (pathname === "/" || pathname.startsWith("/chats")) {
+      if (pathname.startsWith("/chats")) await expect(page.locator(".message-line").first()).toBeVisible();
       const composer = page.locator(".composer");
       await expect(composer).toBeVisible();
       const gap = await page.evaluate(() => {
@@ -65,10 +67,17 @@ for (const pathname of ["/", "/chats/session-1", "/documents", "/trash"]) {
       expect(gap.right).toBeGreaterThanOrEqual(5);
       expect(gap.bottom).toBeGreaterThanOrEqual(5);
     } else {
+      if (pathname === "/documents") await expect(page.locator(".document-card").first()).toBeVisible();
+      else await expect(page.locator(".history-row").first()).toBeVisible();
       const main = page.locator(".workspace-main");
       await main.evaluate(node => { node.scrollTop = node.scrollHeight; });
       const gap = await main.evaluate(node => node.scrollHeight - node.scrollTop - node.clientHeight);
       expect(gap).toBeLessThanOrEqual(1);
+      const visibleBottom = await main.evaluate(node => {
+        const last = node.querySelector(".screen")?.getBoundingClientRect();
+        return last ? node.getBoundingClientRect().bottom - last.bottom : -1;
+      });
+      expect(visibleBottom).toBeGreaterThanOrEqual(6);
     }
     await page.screenshot({ path: "test-results/layout-" + pathname.replaceAll("/", "-") + ".png" });
   });
