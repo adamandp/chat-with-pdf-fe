@@ -26,7 +26,7 @@ test("documents grid/list, search, and pagination", async ({ page }) => {
 
 test("source opens PDF preview and controls are usable", async ({ page }) => {
   await page.goto("/chats/session-1");
-  await expect(page.getByText("Financial Performance", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("Revenue Growth", { exact: false }).first()).toBeVisible();
   await page.getByRole("button", { name: "Annual Report 2023.pdf Page 12" }).first().click();
   await expect(page.getByRole("region", { name: /PDF preview/ })).toBeVisible();
   await page.getByRole("button", { name: "Zoom in" }).click();
