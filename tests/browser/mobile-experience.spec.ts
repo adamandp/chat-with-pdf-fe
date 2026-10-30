@@ -33,7 +33,7 @@ test("pin and unpin session persist across reload", async ({ page }) => {
 test("theme selection persists across route changes and reload", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Account settings" }).click();
-  await page.getByRole("radio", { name: "Dark" }).click();
+  await page.getByRole("switch", { name: "Dark mode" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
   await expect(page.locator(".sidebar")).toHaveCSS("background-color", "rgb(41, 51, 68)");
   await page.getByRole("link", { name: "Documents" }).click();
@@ -71,7 +71,7 @@ test("dark mobile drawer and composer remain in viewport", async ({ page }) => {
   await page.goto("/chats/session-1");
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Account settings" }).click();
-  await page.getByRole("radio", { name: "Dark" }).click();
+  await page.getByRole("switch", { name: "Dark mode" }).click();
   await page.getByRole("complementary", { name: "Main navigation" }).getByRole("button", { name: "Close navigation" }).click();
   // Sidebar slides out over 200ms: check the settled box, not a transition frame.
   await expect.poll(async () => {

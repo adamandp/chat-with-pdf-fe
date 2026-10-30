@@ -91,3 +91,16 @@
   .chat-banner.is-collapsed { padding: 10px 10px 13px; }
 }
 @media (prefers-reduced-motion: reduce) { .sidebar, .theme-switch-thumb { transition: none; } }
+
+/* Visible during upload even when the mobile attachment list is collapsed. */
+.upload-progress-chip {
+ display:flex; align-items:center; gap:8px; min-width:0; max-width:100%;
+ margin-bottom:8px; padding:7px 10px; border:1.5px solid #111;
+ border-radius:10px; background:var(--accent); color:var(--accent-foreground);
+ font-size:11px;
+}
+.upload-progress-chip .upload-progress-name { flex:1 1 auto; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.upload-progress-chip strong { flex:none; }
+.upload-progress-chip svg { flex:none; color:#1889e8; }
+.composer-attach:disabled { opacity:.55; }
+.dark .upload-progress-chip { background:#425c7a; color:#f4f5f9; }
