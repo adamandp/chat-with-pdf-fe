@@ -62,6 +62,7 @@ test("compact mobile composer, thinking controls and PDF preview", async ({ page
   await expect(pageNumber).toBeVisible();
   const box = await pageNumber.boundingBox();
   expect(box?.width ?? 999).toBeLessThanOrEqual(40);
+  await expect(page.locator(".pdf-canvas canvas").first()).toBeVisible({ timeout: 20_000 });
   await page.screenshot({ path: "test-results/mobile-pdf-compact.png" });
 });
 
@@ -72,11 +73,10 @@ test("dark mobile drawer and composer remain in viewport", async ({ page }) => {
   await page.getByRole("button", { name: "Account settings" }).click();
   await page.getByRole("radio", { name: "Dark" }).click();
   await page.getByRole("complementary", { name: "Main navigation" }).getByRole("button", { name: "Close navigation" }).click();
-  const geometry = await page.locator(".composer").evaluate(el => {
-    const rect = el.getBoundingClientRect();
-    return {left: rect.left, right: rect.right, viewport: document.documentElement.clientWidth};
-  });
-  expect(geometry.left).toBeGreaterThanOrEqual(-1);
-  expect(geometry.right).toBeLessThanOrEqual(geometry.viewport + 1);
+  // Sidebar slides out over 200ms: check the settled box, not a transition frame.
+  await expect.poll(async () => {
+    const box = await page.locator(".composer").boundingBox();
+    return box ? box.x + box.width : 999;
+  }, { timeout: 5_000 }).toBeLessThanOrEqual(321);
   await page.screenshot({ path: "test-results/mobile-dark-composer.png" });
 });
