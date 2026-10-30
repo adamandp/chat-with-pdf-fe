@@ -1,0 +1,48 @@
+/* Shared, compact neo-brutalist pagination control. */
+.neo-pagination {
+  width: 100%; min-width: 0; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 14px 0 5px; border-top: 1px solid var(--border);
+}
+.neo-pagination-count { font-size: 12px; font-weight: 600; color: var(--muted-foreground); white-space: nowrap; }
+.neo-pagination-controls { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.neo-pagination-size { display: flex; align-items: center; gap: 6px; }
+.neo-pagination-size-label { font-size: 12px; font-weight: 700; }
+.neo-pagination-size-trigger {
+  display: flex; gap: 5px; align-items: center; justify-content: center;
+  min-width: 52px; height: 34px; padding: 0 7px;
+  border: 2px solid #151515; border-radius: 8px; background: var(--card);
+  color: var(--foreground); box-shadow: 2px 3px 0 #151515; font-size: 12px;
+}
+.neo-pagination-size-trigger:hover { background: var(--accent); }
+.neo-pagination-page { font-size: 12px; white-space: nowrap; }
+.neo-pagination-page strong { font-weight: 900; }
+.neo-pagination-arrows { display: flex; align-items: center; gap: 5px; }
+.neo-pagination-arrows button {
+  display: grid; place-items: center; width: 34px; height: 34px;
+  border: 2px solid #151515; border-radius: 8px; background: var(--card);
+  color: var(--foreground); box-shadow: 2px 3px 0 #151515;
+}
+.neo-pagination-arrows button:disabled { opacity: .3; box-shadow: none; cursor: not-allowed; }
+.neo-pagination-arrows button:not(:disabled):active { transform: translate(1px, 2px); box-shadow: 1px 1px 0 #151515; }
+.neo-pagination-menu { width: 120px; min-width: 120px; padding: 7px; border: 2px solid #151515; border-radius: 9px; background: var(--popover); color: var(--popover-foreground); box-shadow: 3px 4px 0 #151515; }
+.neo-pagination-option {
+  display: flex; justify-content: space-between; align-items: center; width: 100%;
+  padding: 8px 9px; border-radius: 6px; font-size: 13px; font-weight: 800;
+}
+.neo-pagination-option:hover,.neo-pagination-option.selected { background: #ffe665; color: #10121a; }
+@media (max-width: 850px) {
+  .neo-pagination { align-items: flex-start; gap: 10px; }
+  .neo-pagination-count { flex-basis: 100%; }
+  .neo-pagination-controls { justify-content: space-between; gap: 7px; width: 100%; margin: 0; }
+  .neo-pagination-size-label { font-size: 11px; }
+  .neo-pagination-page { font-size: 11px; }
+  .neo-pagination-arrows { gap: 4px; }
+  .neo-pagination-arrows button { width: 31px; height: 31px; }
+  .neo-pagination-size-trigger { min-width: 48px; height: 31px; }
+}
+@media (max-width: 365px) {
+  .neo-pagination-controls { flex-wrap: wrap; }
+  .neo-pagination-page { margin-left: auto; }
+  .neo-pagination-arrows { margin-left: auto; }
+}

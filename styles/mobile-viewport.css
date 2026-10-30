@@ -1,0 +1,32 @@
+/* iOS viewport/keyboard lifecycle. Avoid 100dvh when the keyboard closes:
+   Safari can keep its last short viewport size and strand the composer midway. */
+@media (max-width: 850px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .app-shell {
+    position: fixed;
+    inset-inline: 0;
+    top: var(--mobile-visual-top, 0px);
+    bottom: auto;
+    width: 100%;
+    height: var(--mobile-visual-height, 100svh);
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    padding: 68px 8px max(8px, env(safe-area-inset-bottom));
+  }
+
+  .mobile-topbar {
+    position: absolute;
+    inset: 0 0 auto;
+  }
+
+  .workspace-main {
+    height: 100%;
+    min-height: 0;
+  }
+}

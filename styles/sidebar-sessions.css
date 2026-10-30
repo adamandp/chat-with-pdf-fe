@@ -1,0 +1,23 @@
+/* Neo-brutalist session rows and persisted draft indicators. */
+.sidebar-session-row {
+  min-width: 0; position: relative; display: flex; align-items: center; gap: 10px;
+  padding: 10px 9px; margin: 6px 0; border-radius: 12px; transition: background .15s;
+}
+.sidebar-session-row.is-recent { background: #f3f2ef; }
+.sidebar-session-row.is-recent:hover { background: #e7eff8; }
+.sidebar-session-row.is-pinned { border: 2px solid #111; padding-left: 15px; background: #fffefa; box-shadow: 2px 3px 0 #111; overflow: hidden; }
+.sidebar-session-row.is-pinned::before { content:""; position: absolute; inset: 0 auto 0 0; width: 8px; background: #ffe665; border-right: 2px solid #111; }
+.sidebar-session-row.active { background: #dbeeff; }
+.sidebar-session-row.is-pinned.active { background: #fff5bd; }
+.sidebar-session-icon { flex: none; color: currentColor; }
+.sidebar-session-link { flex: 1; min-width: 0; color: inherit; }
+.sidebar-session-link small { display: block; margin-top: 3px; font-size: 11px; }
+.sidebar-session-more { display: grid; place-items: center; flex: none; min-width: 28px; min-height: 28px; border-radius: 8px; }
+.sidebar-session-more:hover { background: #e4e4e2; }
+.sidebar-draft-dot { width: 9px; height: 9px; min-width: 9px; border-radius: 50%; background: #f04aa2; }
+.sidebar-section-title { margin-top: 9px; margin-bottom: 5px; }
+.sidebar-brand-logo { display: block; }
+@media (max-width: 850px) {
+  .sidebar-session-row { padding-block: 10px; margin-block: 6px; }
+  .sidebar-session-row.is-pinned { padding-block: 11px; }
+}

@@ -1,0 +1,90 @@
+/* Dark palette adapted from the user's navy/charcoal mockup.
+   Only colors change; page layout and neo-brutalist shapes remain untouched. */
+.dark {
+  color-scheme: dark;
+  --background: #262e3d;
+  --foreground: #f4f5f9;
+  --card: #313b4d;
+  --card-foreground: #f4f5f9;
+  --popover: #333d4d;
+  --popover-foreground: #f4f5f9;
+  --primary: #6abfff;
+  --primary-foreground: #11151c;
+  --secondary: #ffe665;
+  --secondary-foreground: #14171c;
+  --muted: #424c5e;
+  --muted-foreground: #c0c9d5;
+  --accent: #455a74;
+  --accent-foreground: #f9fbff;
+  --border: #121825;
+  --input: #54647a;
+  --ring: #8dc9ff;
+}
+.dark body, .dark .app-shell, .dark .workspace-main,
+.dark .mobile-topbar { background: var(--background); color: var(--foreground); }
+.dark .mobile-topbar { border-bottom-color: #566173; }
+.dark :is(.sidebar,.sidebar-body,.sidebar-footer) { background: #293344; color: var(--foreground); }
+.dark .sidebar { border-color: #090d15; }
+.dark .sidebar-footer { border-color: #151b26; }
+.dark .sidebar-divider, .dark .history-row { border-color: #687486; }
+.dark .nav-link { color: var(--foreground); }
+.dark .nav-link:hover { background: #45556b; }
+.dark .nav-link.active { background: #5b86b7; color: white; }
+.dark :is(.sidebar-search,.toolbar-field,.composer,.message-bubble,.neo-card,.history-section,.document-card,.document-row,.pdf-panel) {
+  background: var(--card); color: var(--foreground); border-color: #10141c;
+}
+.dark :is(.sidebar-search input,.toolbar-field input,.composer textarea,.neo-dialog-input) { color: var(--foreground); }
+.dark :is(.sidebar-search input,.toolbar-field input,.composer textarea)::placeholder { color: #c0c6d0; }
+.dark .text-muted { color: #c1c9d5; }
+.dark .sidebar-session-row.is-recent { color: var(--foreground); background: #323d4f; }
+.dark .sidebar-session-row.is-recent:hover { background: #41516a; }
+.dark .sidebar-session-row.is-pinned { color: var(--foreground); background: #343f51; border-color: #111; }
+.dark .sidebar-session-row.active { color: #101925; background: #9ac9ff; }
+.dark .sidebar-session-row.is-pinned.active { background: #ffeaa5; }
+.dark .sidebar-session-row.active .text-muted { color: #475467; }
+.dark .sidebar-session-more:hover { background: #455369; }
+.dark .banner, .dark .banner p { color: #111820; }
+.dark .message-line.user .message-bubble { color: #f4f9ff; background: #3c5a77; }
+.dark .message-bubble { box-shadow: 3px 4px 0 #090d14; }
+.dark .composer { background: #333d50; box-shadow: 4px 5px 0 #090d14; }
+.dark .composer-chip { color: #f2f9ff; background: #435775; border-color: #7295bb; }
+.dark .composer-mode { color: white; background: #343f53; }
+.dark .composer-thinking { background: #ffe665; color: #111; }
+.dark .composer-option:hover { color: white; background: #465872; }
+.dark .composer-option.selected { color: white; background: #425e83; border-color: #93c4ff; }
+.dark .composer-selection-item button:hover { background: #4a5c76; }
+.dark :is(.bg-white,[data-slot="popover-content"],[data-slot="dropdown-menu-content"],[data-slot="dialog-content"]) {
+  color: var(--foreground); background-color: var(--popover);
+}
+.dark :is(.bg-white,[data-slot="popover-content"],[data-slot="dropdown-menu-content"],[data-slot="dialog-content"]) input { color: var(--foreground); }
+.dark [data-slot="dropdown-menu-item"]:hover { background-color: #435874; }
+.dark .neo-button:not(.pink):not(.blue):not(.yellow):not(.mint):not(.purple):not(.composer-attach):not(.composer-send):not(.composer-thinking) {
+  color: var(--foreground); background: #364257;
+}
+.dark .mobile-nav-trigger { color: var(--foreground); background: #364257; }
+.dark .mobile-new-chat { color: #111; background: #ff788c; }
+.dark .pdf-panel-header { color: #121824; background: #54b4ff; }
+.dark .pdf-toolbar, .dark .pdf-related { color: var(--foreground); background: #333e50; }
+.dark .pdf-canvas { background: #3b4351; }
+.dark .pdf-canvas canvas { background: white; }
+.dark .pdf-page-controls input { color: #111; background: #ffe665; }
+.dark .pdf-header-action, .dark .pdf-more { color: var(--foreground); background: #364257; }
+.dark .account-theme-option:hover { color: var(--foreground); background: #465977; }
+.dark .account-theme-option.selected { color: white; background: #52749e; }
+.dark .sidebar-account-trigger:hover { background: #40516a; }
+.dark .neo-dialog-compact [data-slot="dialog-close"] { background: #394457; color: white; }
+.dark .neo-pagination-count { color: #bfcbd9; }
+.dark .neo-pagination-size-trigger, .dark .neo-pagination-arrows button { color: white; background: #3a475c; }
+.dark .neo-pagination-size-trigger:hover { background: #4a5f7a; }
+.dark .neo-pagination-menu { background: #39475e; color: white; }
+.dark .neo-pagination-option:hover, .dark .neo-pagination-option.selected { background: #ffe665; color: #111; }
+.dark .pill.analyzed,.dark .pill.pending { color: #1a2738; }
+.dark .source-card { color: #10121a; }
+.dark .document-card .pdf-icon, .dark .pdf-icon { color: #111; }
+.dark .composer-document-count { color: #111; }
+/* Preserve the yellow / pink / blue / mint / purple callouts from light mode. */
+.dark .pink:not(.message-bubble), .dark .neo-card.pink { color: #10121a; background: #ff7c96; }
+.dark .blue:not(.message-bubble), .dark .neo-card.blue { color: #10121a; background: #6bbdff; }
+.dark .yellow:not(.message-bubble), .dark .neo-card.yellow { color: #10121a; background: #ffe665; }
+.dark .mint:not(.message-bubble), .dark .neo-card.mint { color: #10121a; background: #75e9c2; }
+.dark .purple:not(.message-bubble), .dark .neo-card.purple { color: #10121a; background: #d5a3ff; }
