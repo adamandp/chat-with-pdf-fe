@@ -35,7 +35,7 @@ test("theme selection persists across route changes and reload", async ({ page }
   await page.getByRole("button", { name: "Account settings" }).click();
   await page.getByRole("radio", { name: "Dark" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
-  await expect(page.locator(".sidebar")).toHaveCSS("background-color", "rgb(24, 28, 36)");
+  await expect(page.locator(".sidebar")).toHaveCSS("background-color", "rgb(41, 51, 68)");
   await page.getByRole("link", { name: "Documents" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
   await page.reload();

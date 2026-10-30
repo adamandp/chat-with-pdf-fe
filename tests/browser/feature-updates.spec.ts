@@ -2,8 +2,8 @@ import { expect, test } from "@playwright/test";
 
 test("fork from assistant produces independent chat history", async ({ page }) => {
   await page.goto("/chats/session-1");
+  await expect(page.locator(".message-line")).toHaveCount(2);
   const sourceMessages = await page.locator(".message-line").count();
-  expect(sourceMessages).toBeGreaterThanOrEqual(2);
   await page.getByRole("button", { name: "Fork chat from this message" }).last().click();
   await expect(page).toHaveURL(/\/chats\/(?!session-1)[a-z0-9-]+$/i);
   await expect(page.locator(".chat-banner")).toContainText("Fork: Q3 Financial Summary");
@@ -45,6 +45,7 @@ test("compact pagination controls retain expected navigation", async ({ page }) 
   await expect(pagination).toContainText("Showing 1–4 of 12");
   await pagination.getByRole("button", { name: "Last page" }).click();
   await expect(pagination).toContainText("Page 3 / 3");
+  await pagination.scrollIntoViewIfNeeded();
   await page.screenshot({ path: "test-results/pagination-compact.png" });
 });
 
