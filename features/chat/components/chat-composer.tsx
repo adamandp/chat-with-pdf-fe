@@ -1,13 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowUp, Bot, Check, ChevronDown, FileText, Folder, Paperclip, Search, Sparkles, Upload, X, Zap } from "lucide-react";
+import { ArrowUp, Bot, Check, ChevronDown, FileText, Folder, LoaderCircle, Paperclip, Search, Sparkles, Upload, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 import type { AnswerMode, ThinkingMode } from "@/features/common/types";
 import { PdfIcon } from "@/features/common/components/pdf-icon";
 import { rememberUploadedFile } from "@/lib/uploaded-files";
 import { useDocuments } from "@/services/documents/document.query";
 import { useUploadDocument } from "@/services/documents/document.mutation";
+import type { UploadStage } from "@/services/documents/document-upload.api";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -30,42 +31,50 @@ export function ChatComposer({ draft, setDraft, mode, setMode, thinking, setThin
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [librarySearch, setLibrarySearch] = useState("");
+  const [uploadStage, setUploadStage] = useState<UploadStage>("preparing");
   const fileInput = useRef<HTMLInputElement>(null);
   const upload = useUploadDocument();
   const { data: library } = useDocuments({ q: librarySearch, pageSize: 50 });
   const { data: selectedDocuments } = useDocuments({ pageSize: 50 });
 
   function onFile(file?: File) {
-    if (!file) return;
+    if (!file || upload.isPending) return;
     if (file.type !== "application/pdf" || !file.name.toLowerCase().endsWith(".pdf")) { toast.error("Choose a PDF file"); return; }
     if (file.size > 20 * 1024 * 1024) { toast.error("PDF must be under 20 MB"); return; }
-    upload.mutate(file, {
-      onSuccess: (doc) => { rememberUploadedFile(doc.id, file); setSelectedIds([...new Set([...selectedIds, doc.id])]); toast.success("PDF added to your library"); },
-      onError: () => toast.error("Upload failed"),
+    upload.mutate({ file, onStage: setUploadStage }, {
+      onSuccess: (doc) => { rememberUploadedFile(doc.id, file); setSelectedIds([...new Set([...selectedIds, doc.id])]); toast.success("PDF is ready to chat"); },
+      onError: (error) => toast.error(error instanceof Error ? error.message : "Upload failed"),
     });
     if (fileInput.current) fileInput.current.value = "";
   }
 
+  const uploading = upload.isPending;
+  const stageLabel = uploadStage === "preparing" ? "Preparing" : uploadStage === "uploading" ? "Uploading" : "Processing";
+
   return <div className="composer" role="group" aria-label="Chat composer">
+    {uploading && <div className="upload-progress-chip" role="status" aria-live="polite">
+      <LoaderCircle size={16} className="animate-spin" />
+      <span className="upload-progress-name" title={upload.variables?.file.name}>{upload.variables?.file.name}</span>
+      <strong>{stageLabel}…</strong>
+    </div>}
     {selectedIds.length > 0 && <div className="composer-documents" aria-label="Attached documents">{selectedIds.map((id) => {
       const doc = selectedDocuments?.data.find((item) => item.id === id);
       return <span key={id} className="composer-chip"><FileText size={14} /><span className="truncate">{doc?.name || "Selected PDF"}</span><button type="button" aria-label={`Remove ${doc?.name || "PDF"}`} onClick={() => setSelectedIds(selectedIds.filter((item) => item !== id))}><X size={14} /></button></span>;
     })}</div>}
     <textarea aria-label="Your message" placeholder="Ask about your PDFs..." value={draft}
       onChange={(event) => { setDraft(event.target.value); event.target.style.height = "auto"; event.target.style.height = Math.min(event.target.scrollHeight, 130) + "px"; }}
-      onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && !window.matchMedia("(pointer: coarse)").matches) { event.preventDefault(); if (draft.trim() && !pending) onSend(); } }} rows={1} />
+      onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && !window.matchMedia("(pointer: coarse)").matches) { event.preventDefault(); if (draft.trim() && !pending && !uploading) onSend(); } }} rows={1} />
     <div className="composer-actions">
       <input ref={fileInput} type="file" className="hidden" accept="application/pdf,.pdf" aria-label="Upload a PDF" onChange={(event) => onFile(event.target.files?.[0])} />
       <Popover open={attachOpen} onOpenChange={setAttachOpen}>
-        <PopoverTrigger aria-label="Attach a document" className="neo-button pink composer-attach"><Paperclip size={19} /></PopoverTrigger>
-        <PopoverContent side="top" align="start" sideOffset={10} className="w-[min(288px,calc(100vw-24px))] border-2 border-black bg-white p-2 shadow-[3px_4px_0_#111]">
-          <button className="flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-blue-50" onClick={() => { setAttachOpen(false); fileInput.current?.click(); }}><span className="rounded-lg bg-[#ff8ba0] p-2"><Upload size={19} /></span><span><strong className="block text-sm">Upload New PDF</strong><small className="text-muted">Choose a PDF from your device</small></span></button>
+        <PopoverTrigger disabled={uploading} aria-label="Attach a document" className="neo-button pink composer-attach"><Paperclip size={19} /></PopoverTrigger>
+        <PopoverContent side="top" align="start" sideOffset={10} className="w-[min(288px,calc(100vw-24px))] border-2 border-black bg-popover p-2 shadow-[3px_4px_0_#111]">
+          <button className="composer-popover-action" onClick={() => { setAttachOpen(false); fileInput.current?.click(); }}><span className="composer-popover-icon pink"><Upload size={19} /></span><span className="composer-popover-copy"><strong>Upload New PDF</strong><small>Choose a PDF from your device</small></span></button>
           <div className="my-1 border-t" />
-          <button className="flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-blue-50" onClick={() => { setAttachOpen(false); setLibraryOpen(true); }}><span className="rounded-lg bg-[#ffe65b] p-2"><Folder size={19} /></span><span><strong className="block text-sm">Choose from Library</strong><small className="text-muted">Use an existing document</small></span></button>
+          <button className="composer-popover-action" onClick={() => { setAttachOpen(false); setLibraryOpen(true); }}><span className="composer-popover-icon yellow"><Folder size={19} /></span><span className="composer-popover-copy"><strong>Choose from Library</strong><small>Use an existing document</small></span></button>
         </PopoverContent>
       </Popover>
       <span className="composer-spacer" />
-      {upload.isPending && <span className="text-xs text-muted">Uploading…</span>}
       <Popover open={modeOpen} onOpenChange={setModeOpen}>
         <PopoverTrigger aria-label="Answer Mode" className="neo-button composer-mode" title={`Answer Mode: ${mode === "document" ? "Document Only" : "General Knowledge"} · ${selectedIds.length} PDFs attached`}>
           {mode === "document" ? <FileText size={19} /> : <Bot size={19} />}
@@ -105,7 +114,7 @@ export function ChatComposer({ draft, setDraft, mode, setMode, thinking, setThin
           <p className="px-2 pt-2 text-xs text-muted">Demo only: backend reasoning is not connected yet.</p>
         </PopoverContent>
       </Popover>
-      <button type="button" className="neo-button blue composer-send" disabled={pending || !draft.trim()} aria-label="Send message" title="Send message" onClick={onSend}><ArrowUp size={22} strokeWidth={3} /></button>
+      <button type="button" className="neo-button blue composer-send" disabled={pending || uploading || !draft.trim()} aria-label="Send message" title={uploading ? "Wait for PDF processing to finish" : "Send message"} onClick={onSend}><ArrowUp size={22} strokeWidth={3} /></button>
     </div>
     <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
       <DialogContent className="neo-card max-w-[min(94vw,520px)]! bg-white p-4 sm:p-6">

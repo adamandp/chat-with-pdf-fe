@@ -21,6 +21,7 @@ export interface PdfDocument {
   updatedAt: string;
   deletedAt: string | null;
   analyzed: boolean;
+  status?: "PENDING_UPLOAD" | "QUEUED" | "PROCESSING" | "READY" | "FAILED";
   accent: Accent;
   url?: string;
 }
