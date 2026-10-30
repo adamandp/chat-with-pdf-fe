@@ -11,3 +11,11 @@
   .neo-dialog-compact { padding: 16px; gap: 12px; }
   .neo-dialog-compact [data-slot="dialog-footer"] { justify-content: flex-end; }
 }
+
+/* Closing animations can briefly retain portaled nodes on iOS.
+   Only dismissed overlays become untouchable; active dialogs remain modal. */
+[data-slot="popover-content"][data-closed],
+[data-slot="dropdown-menu-content"][data-closed],
+[data-slot="dialog-overlay"][data-closed] {
+  pointer-events: none;
+}

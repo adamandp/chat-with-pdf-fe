@@ -48,8 +48,10 @@ test("touch-driven rename remains interactive after closing modal", async ({ pag
   await expect(page.getByRole("dialog")).toBeHidden();
   await actions.tap();
   await expect(page.getByRole("menuitem", { name: "Fork chat" })).toBeVisible();
+  // A tap outside the open menu also lands on the drawer's backdrop and closes it.
+  // That's expected; don't try to tap an off-screen close button afterwards.
   await page.touchscreen.tap(370, 210);
-  await page.getByRole("complementary", { name: "Main navigation" }).getByRole("button", { name: "Close navigation" }).tap();
+  await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Send message" })).toBeVisible();
   await page.getByRole("textbox", { name: "Your message" }).fill("Touch still enabled");
   await expect(page.getByRole("button", { name: "Send message" })).toBeEnabled();
