@@ -1,0 +1,25 @@
+name: Interaction Investigation
+on:
+  push:
+    branches: [qa/chat-interaction-debug]
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bunx playwright install --with-deps chromium
+      - run: bunx playwright test tests/browser/popup-interaction.spec.ts --reporter=line
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: interaction-debug-${{ github.run_id }}
+          path: test-results/
+          if-no-files-found: ignore
