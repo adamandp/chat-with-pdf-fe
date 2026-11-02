@@ -15,16 +15,33 @@ const rows: Array<[string, string, number, Accent, boolean, string]> = [
   ["Executive Summary.pdf", "Leadership Overview", 12, "blue", false, "2023-09-03"],
 ];
 
-export const documents: PdfDocument[] = rows.map(([name, description, pages, accent, analyzed, date], index) => ({
-  id: `doc-${index + 1}`, name, description, pages, accent, analyzed,
-  size: `${(1.2 + index * 0.34).toFixed(1)} MB`,
-  createdAt: `${date}T09:00:00Z`, updatedAt: `${date}T09:00:00Z`, deletedAt: null,
-  url: `/pdfs/${encodeURIComponent(name)}`,
-}));
+export const documents: PdfDocument[] = rows.map(
+  ([name, description, pages, accent, analyzed, date], index) => ({
+    id: `doc-${index + 1}`,
+    name,
+    description,
+    pages,
+    accent,
+    analyzed,
+    size: `${(1.2 + index * 0.34).toFixed(1)} MB`,
+    createdAt: `${date}T09:00:00Z`,
+    updatedAt: `${date}T09:00:00Z`,
+    deletedAt: null,
+    url: `/pdfs/${encodeURIComponent(name)}`,
+  }),
+);
 
-export const deletedDocuments: PdfDocument[] = rows.slice(0, 5).map(([name, description, pages, accent], index) => ({
-  id: `deleted-doc-${index + 1}`, name, description, pages, accent, analyzed: true,
-  size: `${(2.4 + index * 0.5).toFixed(1)} MB`,
-  createdAt: "2023-08-01T09:00:00Z", updatedAt: "2023-08-01T09:00:00Z",
-  deletedAt: new Date(Date.now() - (index + 1) * 86400000).toISOString(),
-}));
+export const deletedDocuments: PdfDocument[] = rows
+  .slice(0, 5)
+  .map(([name, description, pages, accent], index) => ({
+    id: `deleted-doc-${index + 1}`,
+    name,
+    description,
+    pages,
+    accent,
+    analyzed: true,
+    size: `${(2.4 + index * 0.5).toFixed(1)} MB`,
+    createdAt: "2023-08-01T09:00:00Z",
+    updatedAt: "2023-08-01T09:00:00Z",
+    deletedAt: new Date(Date.now() - (index + 1) * 86400000).toISOString(),
+  }));

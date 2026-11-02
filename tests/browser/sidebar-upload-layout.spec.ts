@@ -6,7 +6,9 @@ test("desktop sidebar collapses into rail and account switch stays usable", asyn
   const sidebar = page.getByRole("complementary", { name: "Main navigation" });
   await page.getByRole("button", { name: "Collapse sidebar" }).click();
   await expect(sidebar).toHaveClass(/desktop-collapsed/);
-  await expect.poll(async () => (await sidebar.boundingBox())?.width ?? 999).toBeLessThanOrEqual(80);
+  await expect
+    .poll(async () => (await sidebar.boundingBox())?.width ?? 999)
+    .toBeLessThanOrEqual(80);
   await expect(page.getByRole("link", { name: "Documents" })).toBeVisible();
   await page.getByRole("button", { name: "Account settings" }).click();
   const theme = page.getByRole("switch", { name: "Dark mode" });
@@ -27,7 +29,9 @@ test("document attachment pipeline blocks send until processing is ready", async
   const textbox = page.getByRole("textbox", { name: "Your message" });
   await textbox.fill("Summarize the uploaded report");
   await page.getByLabel("Upload a PDF").setInputFiles("public/pdfs/Annual Report 2023.pdf");
-  await expect(page.getByRole("status").filter({ hasText: "Annual Report 2023.pdf" })).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Annual Report 2023.pdf" }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Send message" })).toBeDisabled();
   await expect(textbox).toHaveValue("Summarize the uploaded report");
   await page.screenshot({ path: "test-results/upload-processing.png" });
@@ -46,7 +50,10 @@ test("dark mode document popup has legible menu actions", async ({ page }) => {
   await page.getByRole("button", { name: "Attach a document" }).click();
   const action = page.getByText("Choose from Library", { exact: true });
   await expect(action).toBeVisible();
-  const styles = await action.evaluate(node => ({ color: getComputedStyle(node).color, background: getComputedStyle(node.closest(".composer-popover-action")!).backgroundColor }));
+  const styles = await action.evaluate((node) => ({
+    color: getComputedStyle(node).color,
+    background: getComputedStyle(node.closest(".composer-popover-action")!).backgroundColor,
+  }));
   expect(styles.color).not.toEqual(styles.background);
   await page.screenshot({ path: "test-results/attachment-popup-dark.png" });
 });
@@ -56,7 +63,8 @@ for (const pathname of ["/", "/chats/session-1", "/documents", "/trash"]) {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(pathname);
     if (pathname === "/" || pathname.startsWith("/chats")) {
-      if (pathname.startsWith("/chats")) await expect(page.locator(".message-line").first()).toBeVisible();
+      if (pathname.startsWith("/chats"))
+        await expect(page.locator(".message-line").first()).toBeVisible();
       const composer = page.locator(".composer");
       await expect(composer).toBeVisible();
       const gap = await page.evaluate(() => {
@@ -67,18 +75,25 @@ for (const pathname of ["/", "/chats/session-1", "/documents", "/trash"]) {
       expect(gap.right).toBeGreaterThanOrEqual(5);
       expect(gap.bottom).toBeGreaterThanOrEqual(5);
     } else {
-      if (pathname === "/documents") await expect(page.locator(".document-card").first()).toBeVisible();
+      if (pathname === "/documents")
+        await expect(page.locator(".document-card").first()).toBeVisible();
       else await expect(page.locator(".history-row").first()).toBeVisible();
       const main = page.locator(".workspace-main");
-      await main.evaluate(node => { node.scrollTop = node.scrollHeight; });
-      const gap = await main.evaluate(node => node.scrollHeight - node.scrollTop - node.clientHeight);
+      await main.evaluate((node) => {
+        node.scrollTop = node.scrollHeight;
+      });
+      const gap = await main.evaluate(
+        (node) => node.scrollHeight - node.scrollTop - node.clientHeight,
+      );
       expect(gap).toBeLessThanOrEqual(1);
-      const visibleBottom = await main.evaluate(node => {
+      const visibleBottom = await main.evaluate((node) => {
         const last = node.querySelector(".screen")?.getBoundingClientRect();
         return last ? node.getBoundingClientRect().bottom - last.bottom : -1;
       });
       expect(visibleBottom).toBeGreaterThanOrEqual(6);
     }
-    await page.screenshot({ path: "test-results/layout-" + pathname.replaceAll("/", "-") + ".png" });
+    await page.screenshot({
+      path: "test-results/layout-" + pathname.replaceAll("/", "-") + ".png",
+    });
   });
 }

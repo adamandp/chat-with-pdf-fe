@@ -6,7 +6,13 @@ for (const width of [320, 375, 390, 430, 768, 1280]) {
     await page.goto("/chats/session-1");
     await expect(page.locator(".message-line").first()).toBeVisible();
     const geometry = await page.evaluate(() => {
-      const selectors = [".workspace-main", ".chat-workspace", ".chat-banner", ".chat-thread", ".composer"];
+      const selectors = [
+        ".workspace-main",
+        ".chat-workspace",
+        ".chat-banner",
+        ".chat-thread",
+        ".composer",
+      ];
       const viewportWidth = document.documentElement.clientWidth;
       return {
         viewportWidth,
@@ -19,7 +25,9 @@ for (const width of [320, 375, 390, 430, 768, 1280]) {
         }),
       };
     });
-    expect(geometry.rootScrollWidth, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewportWidth + 1);
+    expect(geometry.rootScrollWidth, JSON.stringify(geometry)).toBeLessThanOrEqual(
+      geometry.viewportWidth + 1,
+    );
     for (const box of geometry.boxes) {
       expect(box.left, JSON.stringify(geometry)).toBeGreaterThanOrEqual(-1);
       expect(box.right, JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.viewportWidth + 1);
@@ -35,12 +43,16 @@ for (const width of [320, 375, 390, 430, 768, 1280]) {
   });
 }
 
-test("header collapses while chatting and expands at the top with no manual toggle", async ({ page }) => {
+test("header collapses while chatting and expands at the top with no manual toggle", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/chats/session-1");
   const header = page.locator(".chat-banner");
   await expect(page.locator(".message-line").first()).toBeVisible();
-  await expect(page.getByRole("button", { name: /collapse chat header|expand chat header/i })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /collapse chat header|expand chat header/i }),
+  ).toHaveCount(0);
   await page.locator(".chat-thread").evaluate((node) => {
     const el = node as HTMLElement;
     el.style.maxHeight = "180px";
@@ -69,7 +81,10 @@ test("mobile composer returns to bottom after viewport and focus cycles", async 
   await page.getByRole("textbox", { name: "Your message" }).focus();
 
   await page.setViewportSize({ width: 390, height: 480 });
-  await expect.poll(() => page.locator(".composer").evaluate((node) => Math.round(node.getBoundingClientRect().bottom)))
+  await expect
+    .poll(() =>
+      page.locator(".composer").evaluate((node) => Math.round(node.getBoundingClientRect().bottom)),
+    )
     .toBeLessThan(480);
 
   await page.getByRole("textbox", { name: "Your message" }).blur();

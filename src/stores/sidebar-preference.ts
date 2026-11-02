@@ -9,7 +9,11 @@ const listeners = new Set<() => void>();
 function getSnapshot() {
   if (!loaded && typeof window !== "undefined") {
     loaded = true;
-    try { snapshot = window.localStorage.getItem(KEY) === "true"; } catch { snapshot = false; }
+    try {
+      snapshot = window.localStorage.getItem(KEY) === "true";
+    } catch {
+      snapshot = false;
+    }
   }
   return snapshot;
 }
@@ -19,16 +23,23 @@ function subscribe(listener: () => void) {
     if (event.key !== KEY) return;
     loaded = false;
     getSnapshot();
-    listeners.forEach(fn => fn());
+    listeners.forEach((fn) => fn());
   };
   window.addEventListener("storage", onStorage);
-  return () => { listeners.delete(listener); window.removeEventListener("storage", onStorage); };
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
 }
 export function useSidebarCollapsed() {
   return useSyncExternalStore(subscribe, getSnapshot, () => false);
 }
 export function toggleSidebarCollapsed() {
   snapshot = !getSnapshot();
-  try { window.localStorage.setItem(KEY, String(snapshot)); } catch { /* storage unavailable */ }
-  listeners.forEach(fn => fn());
+  try {
+    window.localStorage.setItem(KEY, String(snapshot));
+  } catch {
+    /* storage unavailable */
+  }
+  listeners.forEach((fn) => fn());
 }

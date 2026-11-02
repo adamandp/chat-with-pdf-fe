@@ -7,10 +7,19 @@ export function relativeTime(value: string) {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 export function formattedDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(value));
 }
 export function shortTime(value: string) {
-  return new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(value));
 }
 export function errorMessage(error: unknown) {
   if (error instanceof Error) return error.message;

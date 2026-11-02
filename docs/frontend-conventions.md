@@ -1,6 +1,7 @@
 # Frontend implementation conventions
 
 These conventions are grounded in the owner's repositories:
+
 - **dam-creamy-cream:** Next.js App Router layouts, Axios API modules, TanStack Query, and isolated MSW data/handlers
 - **habit-sharper:** feature-specific `.api.ts`, `.query.ts`, and `.mutation.ts` files, plus explicit query-key invalidation
 - **dam-shop-control:** shared navigation and reusable table/pagination components

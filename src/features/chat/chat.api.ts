@@ -1,12 +1,25 @@
 import { axiosInstance } from "@/lib/axios";
-import type { AnswerMode, ThinkingMode, ChatMessage, ChatResponse } from "@/interface/chat.interface";
+import type {
+  AnswerMode,
+  ThinkingMode,
+  ChatMessage,
+  ChatResponse,
+} from "@/interface/chat.interface";
 import type { WebResponse } from "@/interface/common.interface";
 
 export async function getMessages(sessionId: string) {
-  const { data } = await axiosInstance.get<WebResponse<ChatMessage[]>>(`/sessions/${sessionId}/chats`);
+  const { data } = await axiosInstance.get<WebResponse<ChatMessage[]>>(
+    `/sessions/${sessionId}/chats`,
+  );
   return data.data;
 }
-export interface SendChatInput { sessionId?: string; message: string; mode: AnswerMode; thinkingMode: ThinkingMode; documentIds: string[] }
+export interface SendChatInput {
+  sessionId?: string;
+  message: string;
+  mode: AnswerMode;
+  thinkingMode: ThinkingMode;
+  documentIds: string[];
+}
 export async function sendChat(input: SendChatInput) {
   const form = new FormData();
   form.append("sessionId", input.sessionId || "");
@@ -18,15 +31,26 @@ export async function sendChat(input: SendChatInput) {
   return data.data;
 }
 export async function editMessage(id: string, content: string) {
-  const { data } = await axiosInstance.patch<WebResponse<ChatMessage>>(`/messages/${id}`, { content });
+  const { data } = await axiosInstance.patch<WebResponse<ChatMessage>>(`/messages/${id}`, {
+    content,
+  });
   return data.data;
 }
 export async function giveFeedback(messageId: string, rating: "up" | "down") {
-  const { data } = await axiosInstance.post<WebResponse<ChatMessage>>("/feedback", { messageId, rating });
+  const { data } = await axiosInstance.post<WebResponse<ChatMessage>>("/feedback", {
+    messageId,
+    rating,
+  });
   return data.data;
 }
 
-export async function regenerateAnswer(messageId: string, options: { mode: AnswerMode; thinkingMode: ThinkingMode }) {
-  const { data } = await axiosInstance.post<WebResponse<ChatMessage>>(`/messages/${messageId}/regenerate`, options);
+export async function regenerateAnswer(
+  messageId: string,
+  options: { mode: AnswerMode; thinkingMode: ThinkingMode },
+) {
+  const { data } = await axiosInstance.post<WebResponse<ChatMessage>>(
+    `/messages/${messageId}/regenerate`,
+    options,
+  );
   return data.data;
 }

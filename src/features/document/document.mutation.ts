@@ -7,7 +7,8 @@ import { documentKeys } from "./document.query";
 export function useDeleteDocument() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, permanent }: { id: string; permanent: boolean }) => deleteDocument(id, permanent),
+    mutationFn: ({ id, permanent }: { id: string; permanent: boolean }) =>
+      deleteDocument(id, permanent),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: documentKeys.all }),
   });
 }

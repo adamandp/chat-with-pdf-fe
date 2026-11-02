@@ -2,7 +2,7 @@ name: Frontend CI
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master, feat/chat-with-pdf-workspace]
   push:
     branches: [feat/chat-with-pdf-workspace]
 
@@ -21,6 +21,7 @@ jobs:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
       - run: bun run lint
+      - run: bun run format:check
       - run: bun run typecheck
       - run: bun run test
       - run: bun run build

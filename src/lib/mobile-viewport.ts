@@ -12,7 +12,11 @@ export type MobileViewportMeasurements = {
  * keyboard closes; the baseline CSS height must win in that situation.
  */
 export function getKeyboardViewport({
-  baselineHeight, visualHeight, visualTop, mobile, editableFocused,
+  baselineHeight,
+  visualHeight,
+  visualTop,
+  mobile,
+  editableFocused,
 }: MobileViewportMeasurements): { height: number; top: number } | null {
   if (!mobile || !editableFocused) return null;
   if (!Number.isFinite(visualHeight) || visualHeight < 160) return null;

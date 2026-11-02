@@ -7,7 +7,9 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
     <div className="app-shell">
       <MobileViewportSync />
       <AppSidebar />
-      <main className="workspace-main" id="main-content">{children}</main>
+      <main className="workspace-main" id="main-content">
+        {children}
+      </main>
     </div>
   );
 }
