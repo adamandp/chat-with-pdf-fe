@@ -8,13 +8,16 @@ These conventions are grounded in the owner's repositories:
 
 ## Rules for Chat with PDF
 
-1. Keep navigation and shared sidebar in the App Router workspace layout; pages compose screens rather than reimplementing navigation.
-2. Put HTTP requests in `services/<domain>/*.api.ts`; reads and query keys in `*.query.ts`; writes/invalidation in `*.mutation.ts`.
-3. Keep MSW fixture data separate from handlers. Components must not import mock fixtures.
-4. Keep chat header, composer, message, source display, and PDF viewer as distinct UI responsibilities.
-5. Maintain mobile viewport containment: nested flex/grid children need `min-width: 0`, and only the thread should scroll behind a stable header/composer.
-6. Prefer existing shadcn primitives and shared styles over one-off controls.
-7. Test layout changes at narrow and wide widths, with long conversations, many attachments, PDF overlay, and iOS keyboard. CI build alone does not prove visual correctness.
+1. Keep navigation and shared sidebar in `src/app/(workspace)/layout.tsx`; pages compose screens rather than reimplementing navigation.
+2. Place UI components in `src/components/<screen>/` (and shared primitives in `src/components/ui/`), **not inside `src/features/`**. Keep visual components focused; separate menus, dialogs, and renderers where they have their own responsibility.
+3. Put HTTP requests in `src/features/<domain>/<domain>.api.ts`; read hooks and query keys in `<domain>.query.ts`; write hooks and invalidation in `<domain>.mutation.ts`. A domain only needs the files its actual responsibilities require (for example, uploads have no read query hook).
+4. Put shared entity and response types in `src/interface/*.interface.ts`. Add `<domain>.validation.ts` when runtime validation is needed, without introducing new validation behavior as part of a structural refactor.
+5. Components call feature hooks, not Axios directly. Feature modules must not import screen components or MSW fixtures. Use the shared `src/lib/axios.ts` instance for API calls.
+6. Keep MSW fixture data separate from handlers under `src/mocks/`. Components must not import mock fixtures.
+7. Keep chat header, composer, message, source display, and PDF viewer as distinct UI responsibilities.
+8. Maintain mobile viewport containment: nested flex/grid children need `min-width: 0`, and only the thread should scroll behind a stable header/composer.
+9. Prefer existing shadcn primitives and shared styles over one-off controls.
+10. Test layout changes at narrow and wide widths, with long conversations, many attachments, PDF overlay, and iOS keyboard. CI build alone does not prove visual correctness.
 
 ## Document upload boundary
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getKeyboardViewport } from "../lib/mobile-viewport";
+import { getKeyboardViewport } from "../src/lib/mobile-viewport";
 
 const base = {
   baselineHeight: 844,

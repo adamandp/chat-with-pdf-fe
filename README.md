@@ -15,7 +15,7 @@ bun run dev
 
 Open <http://localhost:3000>. Try `/documents`, `/trash`, and `/chats/session-1` for a seeded conversation with citations.
 
-The demo API is enabled by default. Copy `.env.example` to `.env.local` if you want to configure it. For a real backend, set `NEXT_PUBLIC_API_MOCKING=disabled` and `NEXT_PUBLIC_API_URL` to the API origin. The frontend expects the response contracts defined in the service modules.
+The demo API is enabled by default. Copy `.env.example` to `.env.local` if you want to configure it. For a real backend, set `NEXT_PUBLIC_API_MOCKING=disabled` and `NEXT_PUBLIC_API_URL` to the API origin. The frontend expects the response contracts defined in the feature API modules.
 
 ## Commands
 
@@ -33,26 +33,38 @@ bun run generate:pdf   # Regenerate committed sample PDFs
 ## Architecture
 
 ```text
-app/
-  layout.tsx                  Root providers
-  (workspace)/layout.tsx      Persistent shared AppSidebar + main
-  (workspace)/page.tsx        New conversation
-  (workspace)/chats/[sessionId]/page.tsx
-  (workspace)/documents/page.tsx
-  (workspace)/trash/page.tsx
-components/ui/                 shadcn primitives
-components/layout/             Shared sidebar
-features/                      Chat, documents, trash, PDF, common UI
-services/                      Domain API + TanStack Query hooks
-mocks/data/                    Seeded worker-memory data
-mocks/handlers/                MSW endpoints by domain
-lib/axios.ts                   One configured Axios instance
-providers/                     Separate mock readiness and query providers
+src/
+  app/
+    layout.tsx                      Root providers
+    (workspace)/layout.tsx          Persistent shared sidebar + main
+    (workspace)/page.tsx            New conversation
+    (workspace)/chats/[sessionId]/page.tsx
+    (workspace)/documents/page.tsx
+    (workspace)/trash/page.tsx
+  components/
+    chat/                          Chat screen, composer, messages, dialogs
+    documents/                     Document screens and actions
+    sidebar/                       Shared navigation and session dialogs
+    pdf/                           PDF viewer and preview
+    ui/                            shadcn primitives
+  features/
+    chat/                          chat.api, chat.query, chat.mutation
+    chat-session/                  chat-session.api, .query, .mutation
+    document/                      document.api, .query, .mutation
+    document-upload/               document-upload.api, .mutation
+  interface/                       Shared domain and API response types
+  hooks/                           Reusable UI hooks
+  stores/                          Client-only UI preferences and drafts
+  mocks/data/                      Seeded worker-memory data
+  mocks/handlers/                  MSW endpoints by domain
+  lib/axios.ts                     One configured Axios instance
+  providers/                       Mock readiness and query providers
+  styles/                          App styles
 ```
 
 The sidebar is mounted **once** in the shared route layout. Page transitions use actual App Router URLs; no `?page=` or giant client-side page switcher is involved.
 
-The `dam-creamy-cream` frontend informed the service/mock/provider separation, but this app guards initial queries until MSW is ready to avoid a service-worker race.
+UI components follow the screen-oriented separation used in `dam-creamy-cream`; feature API/query/mutation modules follow the conventions in `habit-sharper`. The app still guards initial queries until MSW is ready to avoid a service-worker race.
 
 ## Demo behaviors and limitations
 

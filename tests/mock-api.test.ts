@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { server } from "../mocks/server";
+import { server } from "../src/mocks/server";
 
 const api = "http://localhost:3030/api";
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
