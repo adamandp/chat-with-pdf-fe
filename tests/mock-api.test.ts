@@ -8,45 +8,68 @@ afterAll(() => server.close());
 describe("MSW API contracts", () => {
   test("fork copies history through a selected message without mutating its source", async () => {
     const before = await fetch(`${api}/sessions/session-1/chats`);
-    const original = (await before.json() as { data: { id: string }[] }).data;
+    const original = ((await before.json()) as { data: { id: string }[] }).data;
     const result = await fetch(`${api}/sessions/session-1/fork`, {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageId: original[0].id }),
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messageId: original[0].id }),
     });
     expect(result.status).toBe(201);
-    const session = (await result.json() as { data: { id: string; forkedFromSessionId: string } }).data;
+    const session = ((await result.json()) as { data: { id: string; forkedFromSessionId: string } })
+      .data;
     expect(session.forkedFromSessionId).toBe("session-1");
-    const forked = (await (await fetch(`${api}/sessions/${session.id}/chats`)).json() as { data: { id: string }[] }).data;
+    const forked = (
+      (await (await fetch(`${api}/sessions/${session.id}/chats`)).json()) as {
+        data: { id: string }[];
+      }
+    ).data;
     expect(forked.length).toBe(1);
     expect(forked[0].id).not.toBe(original[0].id);
-    const unchanged = (await (await fetch(`${api}/sessions/session-1/chats`)).json() as { data: { id: string }[] }).data;
-    expect(unchanged.map(x => x.id)).toEqual(original.map(x => x.id));
+    const unchanged = (
+      (await (await fetch(`${api}/sessions/session-1/chats`)).json()) as { data: { id: string }[] }
+    ).data;
+    expect(unchanged.map((x) => x.id)).toEqual(original.map((x) => x.id));
   });
 
   test("regenerate changes only the selected assistant answer and increments revision", async () => {
-    const original = (await (await fetch(`${api}/sessions/session-1/chats`)).json() as {
-      data: { id: string; role: string; content: string }[];
-    }).data;
+    const original = (
+      (await (await fetch(`${api}/sessions/session-1/chats`)).json()) as {
+        data: { id: string; role: string; content: string }[];
+      }
+    ).data;
     const target = original.find((message) => message.role === "assistant")!;
     const response = await fetch(`${api}/messages/${target.id}/regenerate`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode: "document", thinkingMode: "pro" }),
     });
     expect(response.status).toBe(200);
-    const updated = (await response.json() as { data: { id: string; content: string; regenerationCount: number } }).data;
+    const updated = (
+      (await response.json()) as {
+        data: { id: string; content: string; regenerationCount: number };
+      }
+    ).data;
     expect(updated.id).toBe(target.id);
     expect(updated.content).not.toBe(target.content);
     expect(updated.regenerationCount).toBeGreaterThanOrEqual(1);
-    const after = (await (await fetch(`${api}/sessions/session-1/chats`)).json() as {
-      data: { id: string; role: string; content: string }[];
-    }).data;
+    const after = (
+      (await (await fetch(`${api}/sessions/session-1/chats`)).json()) as {
+        data: { id: string; role: string; content: string }[];
+      }
+    ).data;
     expect(after.length).toBe(original.length);
-    expect(after.find(x => x.role === "user")?.content).toBe(original.find(x => x.role === "user")?.content);
+    expect(after.find((x) => x.role === "user")?.content).toBe(
+      original.find((x) => x.role === "user")?.content,
+    );
   });
 
   test("document pagination and sorting return a consistent paging envelope", async () => {
     const response = await fetch(`${api}/documents?page=1&pageSize=6&sort=name&direction=asc`);
     expect(response.status).toBe(200);
-    const result = await response.json() as { data: { name: string }[]; paging: { totalItems: number; totalPages: number } };
+    const result = (await response.json()) as {
+      data: { name: string }[];
+      paging: { totalItems: number; totalPages: number };
+    };
     expect(result.data.length).toBe(6);
     expect(result.paging.totalItems).toBe(12);
     expect(result.paging.totalPages).toBe(2);
@@ -60,8 +83,8 @@ describe("MSW API contracts", () => {
     ]);
     expect(chats.status).toBe(200);
     expect(docs.status).toBe(200);
-    const chatResult = await chats.json() as { data: unknown[] };
-    const docResult = await docs.json() as { data: unknown[]; paging: { currentPage: number } };
+    const chatResult = (await chats.json()) as { data: unknown[] };
+    const docResult = (await docs.json()) as { data: unknown[]; paging: { currentPage: number } };
     expect(chatResult.data.length).toBeGreaterThan(0);
     expect(docResult.paging.currentPage).toBe(2);
     expect(docResult.data.length).toBe(1);
@@ -90,7 +113,9 @@ describe("MSW API contracts", () => {
     form.append("documentIds", JSON.stringify(["doc-1"]));
     const sent = await fetch(`${api}/chats`, { method: "POST", body: form });
     expect(sent.status).toBe(201);
-    const result = await sent.json() as { data: { session: { id: string }; messages: unknown[] } };
+    const result = (await sent.json()) as {
+      data: { session: { id: string }; messages: unknown[] };
+    };
     expect(result.data.messages.length).toBe(2);
     const id = result.data.session.id;
     expect((await fetch(`${api}/sessions/${id}`, { method: "DELETE" })).status).toBe(204);
@@ -106,21 +131,25 @@ describe("MSW API contracts", () => {
       body: JSON.stringify({ fileName: "Upload contract.pdf" }),
     });
     expect(res.status).toBe(201);
-    const payload = await res.json() as { data: { document_id: string; upload_url: string } };
+    const payload = (await res.json()) as { data: { document_id: string; upload_url: string } };
     const id = payload.data.document_id;
-    expect((await fetch(api + "/documents/" + id + "/process", { method: "POST" })).status).toBe(409);
+    expect((await fetch(api + "/documents/" + id + "/process", { method: "POST" })).status).toBe(
+      409,
+    );
     const uploaded = await fetch("http://localhost:3030" + payload.data.upload_url, {
-      method: "PUT", headers: { "Content-Type": "application/pdf" },
+      method: "PUT",
+      headers: { "Content-Type": "application/pdf" },
       body: new Blob(["%PDF-1.4 mock"], { type: "application/pdf" }),
     });
     expect(uploaded.status).toBe(200);
-    expect((await fetch(api + "/documents/" + id + "/process", { method: "POST" })).status).toBe(200);
+    expect((await fetch(api + "/documents/" + id + "/process", { method: "POST" })).status).toBe(
+      200,
+    );
     const mid = await fetch(api + "/documents/" + id);
-    const intermediate = await mid.json() as { data: { status: string } };
+    const intermediate = (await mid.json()) as { data: { status: string } };
     expect(["QUEUED", "PROCESSING"]).toContain(intermediate.data.status);
-    await new Promise(resolve => setTimeout(resolve, 900));
+    await new Promise((resolve) => setTimeout(resolve, 900));
     const ready = await fetch(api + "/documents/" + id);
-    expect((await ready.json() as { data: { status: string } }).data.status).toBe("READY");
+    expect(((await ready.json()) as { data: { status: string } }).data.status).toBe("READY");
   });
-
 });

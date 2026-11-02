@@ -10,7 +10,12 @@ const recent = [
 ] as const;
 
 export const sessions: Session[] = recent.map(([id, title, createdAt, documentIds]) => ({
-  id, title, createdAt, updatedAt: createdAt, deletedAt: null, documentIds: [...documentIds],
+  id,
+  title,
+  createdAt,
+  updatedAt: createdAt,
+  deletedAt: null,
+  documentIds: [...documentIds],
 }));
 
 export const deletedSessions: Session[] = [
@@ -20,7 +25,10 @@ export const deletedSessions: Session[] = [
   ["deleted-chat-4", "Archived questions"],
   ["deleted-chat-5", "Draft comparison"],
 ].map(([id, title], index) => ({
-  id, title, createdAt: new Date(Date.now() - (index + 5) * 86400000).toISOString(),
+  id,
+  title,
+  createdAt: new Date(Date.now() - (index + 5) * 86400000).toISOString(),
   updatedAt: new Date(Date.now() - (index + 1) * 86400000).toISOString(),
-  deletedAt: new Date(Date.now() - (index + 1) * 86400000).toISOString(), documentIds: [],
+  deletedAt: new Date(Date.now() - (index + 1) * 86400000).toISOString(),
+  documentIds: [],
 }));

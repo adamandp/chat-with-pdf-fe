@@ -6,4 +6,6 @@ export function rememberUploadedFile(id: string, file: File) {
   if (old) URL.revokeObjectURL(old);
   files.set(id, URL.createObjectURL(file));
 }
-export function getUploadedFileUrl(id: string) { return files.get(id); }
+export function getUploadedFileUrl(id: string) {
+  return files.get(id);
+}

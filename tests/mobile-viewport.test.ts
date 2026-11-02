@@ -15,8 +15,10 @@ describe("iOS keyboard viewport sizing", () => {
   });
 
   test("positions shell above the active software keyboard", () => {
-    expect(getKeyboardViewport({ ...base, visualHeight: 476, visualTop: 25 }))
-      .toEqual({ height: 476, top: 25 });
+    expect(getKeyboardViewport({ ...base, visualHeight: 476, visualTop: 25 })).toEqual({
+      height: 476,
+      top: 25,
+    });
   });
 
   test("recovers fully after the keyboard is dismissed", () => {

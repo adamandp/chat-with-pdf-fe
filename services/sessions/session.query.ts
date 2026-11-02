@@ -10,9 +10,16 @@ export const sessionKeys = {
 };
 
 export function useSessions(deleted = false, q = "") {
-  return useQuery({ queryKey: sessionKeys.list(deleted, q), queryFn: () => getSessions(deleted, q) });
+  return useQuery({
+    queryKey: sessionKeys.list(deleted, q),
+    queryFn: () => getSessions(deleted, q),
+  });
 }
 
 export function useSession(id?: string) {
-  return useQuery({ queryKey: sessionKeys.detail(id || ""), queryFn: () => getSession(id!), enabled: Boolean(id) });
+  return useQuery({
+    queryKey: sessionKeys.detail(id || ""),
+    queryFn: () => getSession(id!),
+    enabled: Boolean(id),
+  });
 }

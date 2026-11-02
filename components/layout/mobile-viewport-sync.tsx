@@ -23,7 +23,9 @@ export function MobileViewportSync() {
     const isEditableFocused = () => {
       const active = document.activeElement;
       if (!(active instanceof HTMLElement)) return false;
-      return active.matches("input:not([type=checkbox]):not([type=radio]), textarea, [contenteditable=true]");
+      return active.matches(
+        "input:not([type=checkbox]):not([type=radio]), textarea, [contenteditable=true]",
+      );
     };
 
     const sync = () => {

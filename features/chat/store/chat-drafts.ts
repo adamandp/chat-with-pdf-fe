@@ -14,7 +14,9 @@ function parseDrafts(raw: string | null): Readonly<Record<string, string>> {
     const value: unknown = JSON.parse(raw || "{}");
     if (!value || typeof value !== "object" || Array.isArray(value)) return EMPTY;
     return Object.fromEntries(
-      Object.entries(value).filter(([key, text]) => key.length < 150 && typeof text === "string" && text.length < 100_000),
+      Object.entries(value).filter(
+        ([key, text]) => key.length < 150 && typeof text === "string" && text.length < 100_000,
+      ),
     ) as Record<string, string>;
   } catch {
     return EMPTY;
@@ -24,12 +26,18 @@ function parseDrafts(raw: string | null): Readonly<Record<string, string>> {
 function read(): Readonly<Record<string, string>> {
   if (!loaded && typeof window !== "undefined") {
     loaded = true;
-    try { current = parseDrafts(window.localStorage.getItem(KEY)); } catch { current = EMPTY; }
+    try {
+      current = parseDrafts(window.localStorage.getItem(KEY));
+    } catch {
+      current = EMPTY;
+    }
   }
   return current;
 }
 
-function notify() { for (const listener of listeners) listener(); }
+function notify() {
+  for (const listener of listeners) listener();
+}
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
@@ -60,7 +68,11 @@ export function setChatDraft(id: string | undefined, text: string) {
   if (text.length) next[draftKey(id)] = text;
   else delete next[draftKey(id)];
   current = next;
-  try { window.localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* browser storage disabled */ }
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(next));
+  } catch {
+    /* browser storage disabled */
+  }
   notify();
 }
 

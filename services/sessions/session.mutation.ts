@@ -15,7 +15,8 @@ export function useRenameSession() {
 export function useDeleteSession() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, permanent }: { id: string; permanent: boolean }) => deleteSession(id, permanent),
+    mutationFn: ({ id, permanent }: { id: string; permanent: boolean }) =>
+      deleteSession(id, permanent),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.all }),
   });
 }
@@ -31,7 +32,8 @@ export function useRestoreSession() {
 export function useForkSession() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, messageId }: { id: string; messageId?: string }) => forkSession(id, messageId),
+    mutationFn: ({ id, messageId }: { id: string; messageId?: string }) =>
+      forkSession(id, messageId),
     onSuccess: (session) => {
       queryClient.invalidateQueries({ queryKey: sessionKeys.all });
       queryClient.setQueryData(sessionKeys.detail(session.id), session);

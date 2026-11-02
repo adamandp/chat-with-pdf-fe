@@ -4,7 +4,12 @@ import { sessions, deletedSessions } from "./sessions";
 import { messages } from "./messages";
 
 /** Worker-memory demo data; mutations reset after the service worker stops. */
-export const store: { sessions: Session[]; documents: PdfDocument[]; messages: ChatMessage[]; uploadRecords: Map<string, { uploaded: boolean; processingAt: number | null }> } = {
+export const store: {
+  sessions: Session[];
+  documents: PdfDocument[];
+  messages: ChatMessage[];
+  uploadRecords: Map<string, { uploaded: boolean; processingAt: number | null }>;
+} = {
   sessions: [...sessions, ...deletedSessions],
   documents: [...documents, ...deletedDocuments],
   messages: [...messages],

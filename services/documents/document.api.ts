@@ -10,7 +10,9 @@ export interface DocumentFilters {
   pageSize?: number;
 }
 export async function getDocuments(filters: DocumentFilters) {
-  const { data } = await axiosInstance.get<WebResponse<PdfDocument[]>>("/documents", { params: filters });
+  const { data } = await axiosInstance.get<WebResponse<PdfDocument[]>>("/documents", {
+    params: filters,
+  });
   return data;
 }
 export async function deleteDocument(id: string, permanent: boolean) {

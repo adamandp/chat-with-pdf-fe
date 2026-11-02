@@ -22,6 +22,9 @@ The demo API is enabled by default. Copy `.env.example` to `.env.local` if you w
 ```bash
 bun run typecheck
 bun run lint
+bun run format:check   # Validate consistent formatting
+bun run format         # Format source files
+bun run lint:fix       # Fix automatically repairable lint issues
 bun run test           # Bun tests for MSW contracts
 bun run build
 bun run test:e2e       # Requires Playwright Chromium
@@ -29,6 +32,8 @@ bun run generate:pdf   # Regenerate committed sample PDFs
 ```
 
 `postinstall` copies the matching `pdfjs-dist` worker into `public/`, avoiding a separate CDN worker version.
+
+ESLint enforces Next.js, React, and TypeScript rules. Prettier handles code layout (including JSX and CSS). The CI workflow checks both; generated files and PDF fixtures are excluded from formatting.
 
 ## Architecture
 

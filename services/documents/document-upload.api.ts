@@ -10,11 +10,16 @@ export type UploadStage = "preparing" | "uploading" | "processing";
 export type DocumentUploadInput = { file: File; onStage?: (stage: UploadStage) => void };
 type PresignResponse = { document_id: string; upload_url: string; expires_in: number };
 type RawUploadedDocument = Partial<PdfDocument> & {
-  id: string; status?: PdfDocument["status"]; fileName?: string | null;
-  fileSize?: string | null; pageCount?: number | null; download_url?: string;
+  id: string;
+  status?: PdfDocument["status"];
+  fileName?: string | null;
+  fileSize?: string | null;
+  pageCount?: number | null;
+  download_url?: string;
 };
 
-const sleep = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+const sleep = (milliseconds: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
 function toDocument(raw: RawUploadedDocument, fallback: File): PdfDocument {
   return {
@@ -22,7 +27,11 @@ function toDocument(raw: RawUploadedDocument, fallback: File): PdfDocument {
     name: raw.name ?? raw.fileName ?? fallback.name,
     description: raw.description ?? "Uploaded PDF document",
     pages: raw.pages ?? raw.pageCount ?? 1,
-    size: raw.size ?? (raw.fileSize ? `${(Number(raw.fileSize) / 1048576).toFixed(2)} MB` : `${(fallback.size / 1048576).toFixed(2)} MB`),
+    size:
+      raw.size ??
+      (raw.fileSize
+        ? `${(Number(raw.fileSize) / 1048576).toFixed(2)} MB`
+        : `${(fallback.size / 1048576).toFixed(2)} MB`),
     createdAt: raw.createdAt ?? new Date().toISOString(),
     updatedAt: raw.updatedAt ?? new Date().toISOString(),
     deletedAt: raw.deletedAt ?? null,
@@ -37,7 +46,8 @@ export async function uploadDocument({ file, onStage }: DocumentUploadInput): Pr
   onStage?.("preparing");
   // The current backend accepts fileName only. Do not send fields that its DTO rejects.
   const { data: presigned } = await axiosInstance.post<WebResponse<PresignResponse>>(
-    "/documents/presigned-url", { fileName: file.name },
+    "/documents/presigned-url",
+    { fileName: file.name },
   );
   const { document_id, upload_url } = presigned.data;
 
@@ -54,7 +64,9 @@ export async function uploadDocument({ file, onStage }: DocumentUploadInput): Pr
   // The process endpoint only queues a job; successful enqueue is not READY.
   // Poll the authoritative status so chat never searches unfinished embeddings.
   for (let attempt = 0; attempt < 60; attempt++) {
-    const { data } = await axiosInstance.get<WebResponse<RawUploadedDocument>>(`/documents/${document_id}`);
+    const { data } = await axiosInstance.get<WebResponse<RawUploadedDocument>>(
+      `/documents/${document_id}`,
+    );
     const document = data.data;
     if (document.status === "READY") return toDocument(document, file);
     if (document.status === "FAILED") throw new Error("PDF processing failed");

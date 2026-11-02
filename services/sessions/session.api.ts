@@ -2,7 +2,9 @@ import { axiosInstance } from "@/lib/axios";
 import type { Session, WebResponse } from "@/features/common/types";
 
 export async function getSessions(deleted = false, q = "") {
-  const { data } = await axiosInstance.get<WebResponse<Session[]>>("/sessions", { params: { deleted, q } });
+  const { data } = await axiosInstance.get<WebResponse<Session[]>>("/sessions", {
+    params: { deleted, q },
+  });
   return data.data;
 }
 export async function getSession(id: string) {
@@ -23,6 +25,8 @@ export async function restoreSession(id: string) {
 
 /** Forks a full session, or its history through a selected message. */
 export async function forkSession(id: string, messageId?: string) {
-  const { data } = await axiosInstance.post<WebResponse<Session>>(`/sessions/${id}/fork`, { messageId });
+  const { data } = await axiosInstance.post<WebResponse<Session>>(`/sessions/${id}/fork`, {
+    messageId,
+  });
   return data.data;
 }
