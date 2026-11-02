@@ -2,7 +2,7 @@ name: Frontend CI
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master, feat/chat-with-pdf-workspace]
   push:
     branches: [feat/chat-with-pdf-workspace]
 
