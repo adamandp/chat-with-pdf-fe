@@ -77,7 +77,15 @@ for (const pathname of ["/", "/chats/session-1", "/documents", "/trash"]) {
     } else {
       if (pathname === "/documents")
         await expect(page.locator(".document-card").first()).toBeVisible();
-      else await expect(page.locator(".history-row").first()).toBeVisible();
+      else {
+        await expect(page.locator(".history-row").first()).toBeVisible();
+        // Trash fetches chats and documents independently. Wait for both lists
+        // before scrolling, otherwise the second response can grow the page
+        // between the scroll and bottom-spacing measurements.
+        await expect(
+          page.locator('[aria-labelledby="deleted-docs-heading"] .history-row').first(),
+        ).toBeVisible();
+      }
       const main = page.locator(".workspace-main");
       await main.evaluate((node) => {
         node.scrollTop = node.scrollHeight;
