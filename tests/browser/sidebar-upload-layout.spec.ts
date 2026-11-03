@@ -87,17 +87,17 @@ for (const pathname of ["/", "/chats/session-1", "/documents", "/trash"]) {
         ).toBeVisible();
       }
       const main = page.locator(".workspace-main");
-      await main.evaluate((node) => {
+      // Scroll and measure in the same browser task: asynchronous page updates
+      // can otherwise alter the scroll height between separate evaluations.
+      const { gap, visibleBottom } = await main.evaluate((node) => {
         node.scrollTop = node.scrollHeight;
-      });
-      const gap = await main.evaluate(
-        (node) => node.scrollHeight - node.scrollTop - node.clientHeight,
-      );
-      expect(gap).toBeLessThanOrEqual(1);
-      const visibleBottom = await main.evaluate((node) => {
         const last = node.querySelector(".screen")?.getBoundingClientRect();
-        return last ? node.getBoundingClientRect().bottom - last.bottom : -1;
+        return {
+          gap: node.scrollHeight - node.scrollTop - node.clientHeight,
+          visibleBottom: last ? node.getBoundingClientRect().bottom - last.bottom : -1,
+        };
       });
+      expect(gap).toBeLessThanOrEqual(1);
       expect(visibleBottom).toBeGreaterThanOrEqual(6);
     }
     await page.screenshot({
