@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { CalendarDays, Check, FileText, Grid2X2, List, Search, ArrowDownUp } from "lucide-react";
 import { toast } from "sonner";
 import type { PdfDocument } from "@/interface/document.interface";
@@ -28,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { DocumentActions } from "./document-actions";
 
 export function DocumentsScreen() {
+  const reduceMotion = useReducedMotion();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"modified" | "name" | "pages">("modified");
@@ -172,8 +174,18 @@ export function DocumentsScreen() {
         data.data.length > 0 &&
         (view === "grid" ? (
           <div className="document-grid">
-            {data.data.map((document) => (
-              <article key={document.id} className="neo-card document-card">
+            {data.data.map((document, index) => (
+              <motion.article
+                key={document.id}
+                className="neo-card document-card"
+                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={reduceMotion ? undefined : { y: -3 }}
+                transition={{
+                  duration: 0.2,
+                  delay: reduceMotion ? 0 : Math.min(index * 0.035, 0.14),
+                }}
+              >
                 <div className="absolute right-3 top-3">
                   <DocumentActions
                     document={document}
@@ -208,13 +220,22 @@ export function DocumentsScreen() {
                     <CalendarDays size={16} /> {formattedDate(document.updatedAt)}
                   </span>
                 </div>
-              </article>
+              </motion.article>
             ))}
           </div>
         ) : (
           <div className="document-list">
-            {data.data.map((document) => (
-              <article key={document.id} className="neo-card document-row">
+            {data.data.map((document, index) => (
+              <motion.article
+                key={document.id}
+                className="neo-card document-row"
+                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.2,
+                  delay: reduceMotion ? 0 : Math.min(index * 0.035, 0.14),
+                }}
+              >
                 <button
                   onClick={() => setPreview(document)}
                   aria-label={`Preview ${document.name}`}
@@ -246,7 +267,7 @@ export function DocumentsScreen() {
                   onPreview={() => setPreview(document)}
                   onDelete={() => setToDelete(document)}
                 />
-              </article>
+              </motion.article>
             ))}
           </div>
         ))}

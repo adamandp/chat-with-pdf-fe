@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { ChevronUp, LogOut, Moon, Sun, UserRound } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import { useAuth } from "@/providers/auth-provider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -27,8 +28,8 @@ export function AccountPopover({ collapsed = false }: { collapsed?: boolean }) {
   const { resolvedTheme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const mounted = useMounted();
+  const reduceMotion = useReducedMotion();
   const dark = mounted && resolvedTheme === "dark";
-  const [profileOpen, setProfileOpen] = useState(false);
   const [logoutMode, setLogoutMode] = useState<"current" | "all" | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -69,74 +70,77 @@ export function AccountPopover({ collapsed = false }: { collapsed?: boolean }) {
           sideOffset={10}
           className="account-popover"
         >
-          <button className="account-profile w-full text-left" onClick={() => setProfileOpen(true)}>
+          <div className="account-profile">
             <span className="avatar account-avatar">
-              <UserRound size={20} />
+              <UserRound size={22} />
             </span>
             <span className="account-profile-info">
-              <strong>{user?.name || user?.username}</strong>
-              <small>View account</small>
+              <strong>{user?.name || user?.username || "Account"}</strong>
+              <small>@{user?.username}</small>
             </span>
-          </button>
-          <div className="account-setting-row">
-            <div className="account-setting-copy">
-              <strong>Dark mode</strong>
-              <small>Switch your workspace appearance</small>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-label="Dark mode"
-              aria-checked={dark}
-              disabled={!mounted}
-              onClick={() => setTheme(dark ? "light" : "dark")}
-              className={"theme-switch" + (dark ? " is-on" : "")}
-            >
-              <span className="theme-switch-thumb">
-                {dark ? <Moon size={14} /> : <Sun size={14} />}
-              </span>
-            </button>
+            <span className="account-badge">ACCOUNT</span>
           </div>
-          <button
-            className="account-setting-row w-full text-left"
-            onClick={() => setLogoutMode("current")}
-          >
-            <span className="flex items-center gap-2 font-bold">
-              <LogOut size={18} /> Logout
-            </span>
+          <div className="account-section">
+            <p className="account-section-label">ACCOUNT INFO</p>
+            <dl className="account-details">
+              <div>
+                <dt>Full name</dt>
+                <dd>{user?.name || "—"}</dd>
+              </div>
+              <div>
+                <dt>Username</dt>
+                <dd>{user?.username || "—"}</dd>
+              </div>
+            </dl>
+          </div>
+          <div className="account-section account-appearance">
+            <p className="account-section-label">APPEARANCE</p>
+            <div className="account-setting-row">
+              <div className="account-setting-copy">
+                <Moon size={18} />
+                <strong>Dark mode</strong>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-label="Dark mode"
+                aria-checked={dark}
+                disabled={!mounted}
+                onClick={() => setTheme(dark ? "light" : "dark")}
+                className={"theme-switch" + (dark ? " is-on" : "")}
+              >
+                <motion.span
+                  className="theme-switch-thumb"
+                  initial={false}
+                  animate={{ x: dark ? 22 : 0 }}
+                  transition={
+                    reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 450, damping: 30 }
+                  }
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.span
+                      key={dark ? "moon" : "sun"}
+                      className="theme-switch-glyph"
+                      initial={reduceMotion ? false : { opacity: 0, rotate: -45, scale: 0.7 }}
+                      animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                      exit={reduceMotion ? undefined : { opacity: 0, rotate: 45, scale: 0.7 }}
+                      transition={{ duration: reduceMotion ? 0 : 0.15 }}
+                    >
+                      {dark ? <Moon size={14} /> : <Sun size={14} />}
+                    </motion.span>
+                  </AnimatePresence>
+                </motion.span>
+              </button>
+            </div>
+          </div>
+          <button className="neo-button account-logout" onClick={() => setLogoutMode("current")}>
+            <LogOut size={18} /> Log out
           </button>
-          <button
-            className="account-setting-row w-full text-left"
-            onClick={() => setLogoutMode("all")}
-          >
-            <span className="flex items-center gap-2 font-bold">
-              <LogOut size={18} /> Logout all sessions
-            </span>
+          <button className="account-logout-all" onClick={() => setLogoutMode("all")}>
+            Log out all devices
           </button>
         </PopoverContent>
       </Popover>
-      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-        <DialogContent className="neo-card border-2 border-black bg-white p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black">Account</DialogTitle>
-            <DialogDescription>Your account details</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3">
-            <div>
-              <span className="text-xs text-muted">Name</span>
-              <p className="border-b py-2 font-bold">{user?.name || "—"}</p>
-            </div>
-            <div>
-              <span className="text-xs text-muted">Username</span>
-              <p className="border-b py-2 font-bold">{user?.username}</p>
-            </div>
-            <div>
-              <span className="text-xs text-muted">User ID</span>
-              <p className="break-all border-b py-2 font-mono text-xs">{user?.id}</p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
       <Dialog
         open={Boolean(logoutMode)}
         onOpenChange={(open) => {

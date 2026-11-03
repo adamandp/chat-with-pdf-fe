@@ -8,7 +8,7 @@ import {
   MessageSquare,
   Menu,
   PanelLeftClose,
-  PanelLeftOpen,
+  ChevronsRight,
   Plus,
   Search,
   Trash2,
@@ -132,9 +132,14 @@ export function AppSidebar() {
         >
           <Menu size={21} />
         </button>
-        <span className="mobile-title">
+        <Link
+          href="/"
+          className="mobile-title"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Chat with PDF — New Chat"
+        >
           <ChatPdfLogo size={29} /> Chat with PDF
-        </span>
+        </Link>
         <Link className="neo-button mobile-new-chat" href="/" aria-label="New Chat">
           <Plus size={21} />
         </Link>
@@ -163,8 +168,15 @@ export function AppSidebar() {
       >
         <div className="sidebar-body">
           <div className="brand">
-            <ChatPdfLogo size={46} className="sidebar-brand-logo" />
-            <span className="sidebar-brand-title">Chat with PDF</span>
+            <Link
+              href="/"
+              className="sidebar-brand-link"
+              aria-label="Chat with PDF — New Chat"
+              onClick={() => setMobileOpen(false)}
+            >
+              <ChatPdfLogo size={46} className="sidebar-brand-logo" />
+              <span className="sidebar-brand-title">Chat with PDF</span>
+            </Link>
             <button
               className="sidebar-desktop-toggle"
               type="button"
@@ -172,7 +184,11 @@ export function AppSidebar() {
               aria-label={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              {desktopCollapsed ? <PanelLeftOpen size={21} /> : <PanelLeftClose size={21} />}
+              {desktopCollapsed ? (
+                <ChevronsRight size={22} strokeWidth={3} />
+              ) : (
+                <PanelLeftClose size={21} />
+              )}
             </button>
             <button
               className="ml-auto icon-button mobile-close"
