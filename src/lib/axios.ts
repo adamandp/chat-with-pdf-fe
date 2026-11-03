@@ -31,9 +31,11 @@ export async function refreshAccessToken(): Promise<string | null> {
       setAccessToken(token);
       return token;
     })
-    .catch(() => {
+    .catch((error: unknown) => {
       setAccessToken(null);
-      return null;
+      // Only a missing/expired session authorizes anonymous guest creation.
+      if (axios.isAxiosError(error) && error.response?.status === 401) return null;
+      throw error;
     })
     .finally(() => {
       refreshing = null;
@@ -52,7 +54,7 @@ axiosInstance.interceptors.response.use(undefined, async (error: AxiosError) => 
     error.response?.status !== 401 ||
     !request ||
     request._retried ||
-    /\/(auth\/(login|register|logout)|session\/refresh)/.test(request.url ?? "")
+    /\/(auth\/(guest|login|register|logout)|session\/refresh)/.test(request.url ?? "")
   ) {
     throw error;
   }
