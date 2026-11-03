@@ -73,7 +73,7 @@ export function DocumentsScreen() {
       <header className="banner mb-7">
         <div>
           <h1>Documents</h1>
-          <p>{count} documents • Updated today</p>
+          <p>{count} documents in your library</p>
         </div>
         <div className="neo-card flex overflow-hidden bg-white p-1">
           <button

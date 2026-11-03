@@ -14,11 +14,17 @@ export interface ChatMessage {
   sources: Source[];
   feedback?: "up" | "down";
   regenerationCount?: number;
+  status?: "pending" | "streaming" | "completed" | "failed" | "cancelled";
+  parentMessageId?: string | null;
+  versionGroupId?: string;
+  versionCount?: number;
+  versions?: { id: string; active: boolean; status: string; createdAt: string | null }[];
 }
 
 export interface ChatResponse {
   session: Session;
   messages: ChatMessage[];
+  documents: import("./document.interface").PdfDocument[];
 }
 
 export type AnswerMode = "document" | "general";

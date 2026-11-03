@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("desktop sidebar collapses into rail and account switch stays usable", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });

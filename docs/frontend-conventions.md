@@ -22,8 +22,8 @@ These conventions are grounded in the owner's repositories:
 
 ## Document upload boundary
 
-The current NestJS backend exposes `POST /documents/presigned-url` (body `{fileName}`),
-signed `PUT upload_url` to object storage, `POST /documents/:id/process`,
+The current NestJS backend exposes `POST /document-upload/presigned-url` (body `{fileName}`),
+signed `PUT upload_url` to object storage, `POST /document-upload/:id/process`,
 and `GET /documents/:id` for status. There is no backend multipart
 `POST /documents` upload endpoint.
 
@@ -33,3 +33,12 @@ Processing stages. The isolated MSW handlers simulate the same contract, but
 do not replace a real MinIO/BullMQ integration test. Signed PUT requests bypass
 the app Axios baseURL and authentication interceptors. An upload still
 processing after two minutes surfaces an error instead of pretending to be ready.
+
+## Authentication and chat stream
+
+- Access tokens live only in memory. `POST /session/refresh` renews them using the HttpOnly cookie; Axios retries one failed 401 request after a successful refresh.
+- The client uses `credentials: include` for both Axios and POST SSE requests. NestJS must allow the frontend origin and credentials in CORS.
+- `/chat/send`, `/chat/:id/edit` and `/chat/:id/regenerate` return `started/sources/token/done/error` SSE events, parsed by `src/lib/sse.ts`.
+- `GET /chat/:sessionId/details` is the active-branch source of truth; all chat mutations invalidate that cache.
+- Keep server pagination and `q/order` query parameters in the feature API layer. Do not calculate a second source of truth in components.
+- MSW returns the same envelopes and streams, persists metadata to localStorage and demo-uploaded PDF bytes to IndexedDB.

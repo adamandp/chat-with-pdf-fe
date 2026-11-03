@@ -1,13 +1,27 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteSession, forkSession, renameSession, restoreSession } from "./chat-session.api";
+import {
+  deleteSession,
+  forkSession,
+  pinSession,
+  renameSession,
+  restoreSession,
+} from "./chat-session.api";
 import { sessionKeys } from "./chat-session.query";
 
 export function useRenameSession() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) => renameSession(id, title),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.all }),
+  });
+}
+
+export function usePinSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, isPinned }: { id: string; isPinned: boolean }) => pinSession(id, isPinned),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.all }),
   });
 }
@@ -34,9 +48,8 @@ export function useForkSession() {
   return useMutation({
     mutationFn: ({ id, messageId }: { id: string; messageId?: string }) =>
       forkSession(id, messageId),
-    onSuccess: (session) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sessionKeys.all });
-      queryClient.setQueryData(sessionKeys.detail(session.id), session);
     },
   });
 }

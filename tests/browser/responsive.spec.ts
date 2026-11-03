@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 for (const width of [320, 375, 390, 430, 768, 1280]) {
   test(`chat layout stays inside the viewport at ${width}px`, async ({ page }) => {

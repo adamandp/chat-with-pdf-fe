@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  activateVersion,
   editMessage,
   giveFeedback,
   regenerateAnswer,
@@ -9,51 +10,71 @@ import {
   type SendChatInput,
 } from "./chat.api";
 import { chatKeys } from "./chat.query";
-import type { AnswerMode, ThinkingMode } from "@/interface/chat.interface";
+import type { ThinkingMode } from "@/interface/chat.interface";
+import type { StreamEvent } from "@/lib/sse";
 import { sessionKeys } from "@/features/chat-session/chat-session.query";
 
-export function useSendChat() {
+function useChatInvalidation() {
   const queryClient = useQueryClient();
+  return (id?: string) => {
+    void queryClient.invalidateQueries({ queryKey: sessionKeys.all });
+    if (id) void queryClient.invalidateQueries({ queryKey: chatKeys.detail(id) });
+  };
+}
+
+export function useSendChat() {
+  const invalidate = useChatInvalidation();
   return useMutation({
-    mutationFn: (input: SendChatInput) => sendChat(input),
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: sessionKeys.all });
-      queryClient.invalidateQueries({ queryKey: chatKeys.messages(result.session.id) });
-    },
+    mutationFn: sendChat,
+    onSuccess: (detail) => invalidate(detail.session.id),
   });
 }
 
 export function useEditMessage() {
-  const queryClient = useQueryClient();
+  const invalidate = useChatInvalidation();
   return useMutation({
-    mutationFn: ({ id, content }: { id: string; content: string }) => editMessage(id, content),
-    onSuccess: (message) =>
-      queryClient.invalidateQueries({ queryKey: chatKeys.messages(message.sessionId) }),
+    mutationFn: ({ id, input }: { id: string; input: SendChatInput }) => editMessage(id, input),
+    onSuccess: (sessionId) => invalidate(sessionId),
   });
 }
 
 export function useFeedback() {
-  const queryClient = useQueryClient();
+  const invalidate = useChatInvalidation();
   return useMutation({
-    mutationFn: ({ id, rating }: { id: string; rating: "up" | "down" }) => giveFeedback(id, rating),
-    onSuccess: (message) =>
-      queryClient.invalidateQueries({ queryKey: chatKeys.messages(message.sessionId) }),
+    mutationFn: ({
+      id,
+      sessionId,
+      rating,
+    }: {
+      id: string;
+      sessionId: string;
+      rating: "up" | "down";
+    }) => giveFeedback(id, rating).then(() => sessionId),
+    onSuccess: (sessionId) => invalidate(sessionId),
   });
 }
 
 export function useRegenerateAnswer() {
-  const queryClient = useQueryClient();
+  const invalidate = useChatInvalidation();
   return useMutation({
     mutationFn: ({
       messageId,
-      mode,
       thinkingMode,
+      onEvent,
     }: {
       messageId: string;
-      mode: AnswerMode;
       thinkingMode: ThinkingMode;
-    }) => regenerateAnswer(messageId, { mode, thinkingMode }),
-    onSuccess: (message) =>
-      queryClient.invalidateQueries({ queryKey: chatKeys.messages(message.sessionId) }),
+      onEvent?: (event: StreamEvent) => void;
+    }) => regenerateAnswer(messageId, thinkingMode, onEvent),
+    onSuccess: (sessionId) => invalidate(sessionId),
+  });
+}
+
+export function useActivateVersion() {
+  const invalidate = useChatInvalidation();
+  return useMutation({
+    mutationFn: ({ messageId, sessionId }: { messageId: string; sessionId: string }) =>
+      activateVersion(messageId).then(() => sessionId),
+    onSuccess: (sessionId) => invalidate(sessionId),
   });
 }

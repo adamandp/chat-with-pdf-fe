@@ -16,6 +16,8 @@ export const sessions: Session[] = recent.map(([id, title, createdAt, documentId
   updatedAt: createdAt,
   deletedAt: null,
   documentIds: [...documentIds],
+  isPinned: false,
+  ...(id === "session-1" ? { activeLeafMessageId: "msg-2" } : {}),
 }));
 
 export const deletedSessions: Session[] = [
@@ -31,4 +33,5 @@ export const deletedSessions: Session[] = [
   updatedAt: new Date(Date.now() - (index + 1) * 86400000).toISOString(),
   deletedAt: new Date(Date.now() - (index + 1) * 86400000).toISOString(),
   documentIds: [],
+  isPinned: false,
 }));

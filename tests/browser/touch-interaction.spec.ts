@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 // Touch emulation covers outside taps that mouse-only smoke tests miss.
 // Real iOS Safari keyboard lifecycle still needs a physical-device review.

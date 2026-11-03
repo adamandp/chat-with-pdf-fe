@@ -28,7 +28,13 @@ export function TrashScreen() {
   const [documentPageSize, setDocumentPageSize] = useState(4);
   const [documentPage, setDocumentPage] = useState(1);
   const [toDelete, setToDelete] = useState<DeleteTarget | null>(null);
-  const { data: chats = [], isPending: chatsPending } = useSessions(true);
+  const { data: chatResponse, isPending: chatsPending } = useSessions(
+    true,
+    "",
+    chatPage,
+    chatPageSize,
+  );
+  const chats = chatResponse?.data || [];
   const { data: documents, isPending: documentsPending } = useDocuments({
     deleted: true,
     page: documentPage,
@@ -38,7 +44,7 @@ export function TrashScreen() {
   const restoreDoc = useRestoreDocument();
   const deleteChat = useDeleteSession();
   const deleteDoc = useDeleteDocument();
-  const chatTotalPages = Math.max(1, Math.ceil(chats.length / chatPageSize));
+  const chatTotalPages = Math.max(1, chatResponse?.paging?.totalPages || 1);
 
   function onRestore(type: "chat" | "document", id: string) {
     const mutation = type === "chat" ? restoreChat : restoreDoc;
@@ -92,7 +98,7 @@ export function TrashScreen() {
         {!chatsPending && chats.length === 0 && (
           <p className="py-10 text-center text-muted">No deleted chats.</p>
         )}
-        {chats.slice((chatPage - 1) * chatPageSize, chatPage * chatPageSize).map((chat, index) => (
+        {chats.map((chat, index) => (
           <div className="history-row" key={chat.id}>
             <span
               className={`neo-card grid size-12 shrink-0 place-items-center shadow-none ${["yellow", "blue", "mint", "purple"][index % 4]}`}
@@ -101,7 +107,7 @@ export function TrashScreen() {
             </span>
             <div className="min-w-0 flex-1">
               <strong className="block truncate">{chat.title}</strong>
-              <p className="text-sm text-muted">Deleted {relativeTime(chat.deletedAt!)}</p>
+              <p className="text-sm text-muted">Last updated {relativeTime(chat.updatedAt)}</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -125,7 +131,7 @@ export function TrashScreen() {
         <Pagination
           currentPage={Math.min(chatPage, chatTotalPages)}
           totalPages={chatTotalPages}
-          totalItems={chats.length}
+          totalItems={chatResponse?.paging?.totalItems || 0}
           pageSize={chatPageSize}
           onPageSizeChange={(size) => {
             setChatPageSize(size);

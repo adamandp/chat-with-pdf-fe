@@ -19,13 +19,13 @@ import { ChatPdfLogo } from "@/components/brand/chat-pdf-logo";
 import { SidebarSessionRow } from "./sidebar-session-row";
 import { SidebarSessionDialogs } from "./sidebar-session-dialogs";
 import { useChatDrafts } from "@/stores/chat-drafts";
-import { usePinnedSessions } from "@/hooks/use-pinned-sessions";
 import { toast } from "sonner";
-import { useSessions } from "@/features/chat-session/chat-session.query";
+import { useInfiniteSessions } from "@/features/chat-session/chat-session.query";
 import {
   useDeleteSession,
   useRenameSession,
   useForkSession,
+  usePinSession,
 } from "@/features/chat-session/chat-session.mutation";
 import type { Session } from "@/interface/chat-session.interface";
 import { toggleSidebarCollapsed, useSidebarCollapsed } from "@/stores/sidebar-preference";
@@ -38,20 +38,26 @@ export function AppSidebar() {
   const toggleDesktopSidebar = toggleSidebarCollapsed;
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
-  const { pinnedIds, togglePinned } = usePinnedSessions();
   const drafts = useChatDrafts();
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const touchStart = useRef<number | null>(null);
-  const { data: sessions = [] } = useSessions(false, search);
+  const {
+    data: sessionPages,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteSessions(search);
+  const sessions = sessionPages?.pages.flatMap((page) => page.data) || [];
   const rename = useRenameSession();
   const remove = useDeleteSession();
   const fork = useForkSession();
+  const pin = usePinSession();
   const activeSession = pathname.startsWith("/chats/") ? pathname.split("/")[2] : null;
-  const pinned = sessions.filter((session) => pinnedIds.includes(session.id));
-  const recent = sessions.filter((session) => !pinnedIds.includes(session.id));
+  const pinned = sessions.filter((session) => session.isPinned);
+  const recent = sessions.filter((session) => !session.isPinned);
 
   function saveRename() {
     if (!renameId || !renameValue.trim()) return;
@@ -85,11 +91,16 @@ export function AppSidebar() {
       <SidebarSessionRow
         key={session.id}
         session={session}
-        pinned={pinnedIds.includes(session.id)}
+        pinned={session.isPinned}
         active={session.id === activeSession}
         hasDraft={Boolean(drafts[session.id])}
         onNavigate={() => setMobileOpen(false)}
-        onPin={() => togglePinned(session.id)}
+        onPin={() =>
+          pin.mutate(
+            { id: session.id, isPinned: !session.isPinned },
+            { onError: () => toast.error("Could not update pinned chat") },
+          )
+        }
         onRename={() => {
           setRenameId(session.id);
           setRenameValue(session.title);
@@ -240,12 +251,17 @@ export function AppSidebar() {
             <h2 className="sidebar-section-title">Recents</h2>
             {recent.slice(0, expanded ? undefined : 6).map(renderSession)}
             {!recent.length && <p className="px-2 py-4 text-sm text-muted">No matching chats</p>}
-            {recent.length > 6 && (
+            {(hasNextPage || recent.length > 6 || expanded) && (
               <button
                 className="mt-2 px-2 text-sm font-bold hover:underline"
-                onClick={() => setExpanded(!expanded)}
+                disabled={isFetchingNextPage}
+                onClick={() => {
+                  if (!expanded) setExpanded(true);
+                  else if (hasNextPage) void fetchNextPage();
+                  else setExpanded(false);
+                }}
               >
-                {expanded ? "See Less" : "See All"}
+                {!expanded ? "See All" : hasNextPage ? "Load More" : "See Less"}
               </button>
             )}
           </section>

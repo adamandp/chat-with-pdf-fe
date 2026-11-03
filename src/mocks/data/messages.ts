@@ -9,6 +9,9 @@ export const messages: ChatMessage[] = [
     createdAt: stamp,
     content: "What are the key financial highlights from these three annual reports?",
     sources: [],
+    parentMessageId: null,
+    versionGroupId: "group-1",
+    status: "completed",
   },
   {
     id: "msg-2",
@@ -22,5 +25,8 @@ export const messages: ChatMessage[] = [
       { documentId: "doc-2", page: 8 },
       { documentId: "doc-3", page: 15 },
     ],
+    parentMessageId: "msg-1",
+    versionGroupId: "group-2",
+    status: "completed",
   },
 ];
