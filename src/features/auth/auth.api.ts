@@ -14,7 +14,13 @@ export async function login(input: LoginCredentials): Promise<AuthUser> {
     input,
   );
   setAccessToken(data.data.accessToken);
-  return getProfile();
+  try {
+    return await getProfile();
+  } catch (error) {
+    // A failed profile lookup must not leave the UI tied to the previous user.
+    setAccessToken(null);
+    throw error;
+  }
 }
 
 export async function register(input: RegisterInput): Promise<AuthUser> {

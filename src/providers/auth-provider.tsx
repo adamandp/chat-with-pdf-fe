@@ -1,8 +1,23 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { bootstrapAuth, createGuest, getProfile, login, logout, register } from "@/features/auth/auth.api";
+import {
+  bootstrapAuth,
+  createGuest,
+  getProfile,
+  login,
+  logout,
+  register,
+} from "@/features/auth/auth.api";
 import { getAccessToken, refreshAccessToken } from "@/lib/axios";
 import type { AuthUser, LoginCredentials, RegisterInput } from "@/interface/auth.interface";
 
@@ -55,9 +70,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // A failed bootstrap may be retried on the user's first action.
       }
     }
-    if (getAccessToken()) return;
+    if (getAccessToken() && bootstrappedRef.current) return;
 
     ensuringRef.current ??= (async () => {
+      // A refresh can succeed while the profile request fails. Retry the
+      // profile instead of leaving the UI anonymous behind a valid token.
+      if (getAccessToken()) {
+        setUser(await getProfile());
+        bootstrappedRef.current = true;
+        return;
+      }
       // Retry a failed initial bootstrap, but don't repeat a known 401 refresh.
       if (!bootstrappedRef.current) {
         const token = await refreshAccessToken();
