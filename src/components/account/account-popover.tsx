@@ -147,7 +147,10 @@ export function AccountPopover({ collapsed = false }: { collapsed?: boolean }) {
               <p className="text-xs text-muted">
                 Register to keep your chats and PDFs accessible across devices.
               </p>
-              <button className="neo-button pink account-logout" onClick={() => openAuth("register")}>
+              <button
+                className="neo-button pink account-logout"
+                onClick={() => openAuth("register")}
+              >
                 <UserPlus size={18} /> Create account
               </button>
               <button className="neo-button account-logout" onClick={() => openAuth("login")}>
@@ -156,7 +159,10 @@ export function AccountPopover({ collapsed = false }: { collapsed?: boolean }) {
             </div>
           ) : (
             <>
-              <button className="neo-button account-logout" onClick={() => setLogoutMode("current")}>
+              <button
+                className="neo-button account-logout"
+                onClick={() => setLogoutMode("current")}
+              >
                 <LogOut size={18} /> Log out
               </button>
               <button className="account-logout-all" onClick={() => setLogoutMode("all")}>

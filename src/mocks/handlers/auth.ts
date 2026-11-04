@@ -116,12 +116,12 @@ export const authHandlers = [
       .join("");
     const guest = users.find((item) => item.id === activeUserId && item.accountType === "GUEST");
     const registered: DemoUser = {
-        id: guest?.id || crypto.randomUUID(),
-        username,
-        name: payload.name || null,
-        accountType: "REGISTERED",
-        passwordSalt,
-        passwordHash: await hashPassword(payload.password, passwordSalt),
+      id: guest?.id || crypto.randomUUID(),
+      username,
+      name: payload.name || null,
+      accountType: "REGISTERED",
+      passwordSalt,
+      passwordHash: await hashPassword(payload.password, passwordSalt),
     };
     users = guest
       ? users.map((item) => (item.id === guest.id ? registered : item))
