@@ -8,7 +8,7 @@ test("brand links return to New Chat without creating a session", async ({ page 
 
   await page.setViewportSize({ width: 768, height: 850 });
   await page.goto("/trash");
-  await page.getByRole("link", { name: "Chat with PDF — New Chat" }).click();
+  await page.locator(".mobile-title").click();
   await expect(page).toHaveURL(/\/$/);
 
   await page.goto("/documents");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
   Bot,
@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { AnswerMode, ThinkingMode } from "@/interface/chat.interface";
-import { rememberUploadedFile } from "@/lib/uploaded-files";
 import { useDocuments } from "@/features/document/document.query";
 import { useUploadDocument } from "@/features/document-upload/document-upload.mutation";
+import { usePendingUploads } from "@/features/document-upload/use-pending-uploads";
 import type { UploadStage } from "@/features/document-upload/document-upload.api";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChatDocumentLibraryDialog } from "./chat-document-library-dialog";
@@ -39,6 +39,7 @@ export function ChatComposer({
   setThinking,
   selectedIds,
   setSelectedIds,
+  uploadScope,
   onSend,
   pending,
 }: {
@@ -50,6 +51,7 @@ export function ChatComposer({
   setThinking: (mode: ThinkingMode) => void;
   selectedIds: string[];
   setSelectedIds: (ids: string[]) => void;
+  uploadScope: string;
   onSend: () => void;
   pending: boolean;
 }) {
@@ -61,11 +63,22 @@ export function ChatComposer({
   const [uploadStage, setUploadStage] = useState<UploadStage>("preparing");
   const fileInput = useRef<HTMLInputElement>(null);
   const upload = useUploadDocument();
+  const selectedIdsRef = useRef(selectedIds);
+  const setSelectedIdsRef = useRef(setSelectedIds);
+  useEffect(() => {
+    selectedIdsRef.current = selectedIds;
+    setSelectedIdsRef.current = setSelectedIds;
+  }, [selectedIds, setSelectedIds]);
+  const pendingUploads = usePendingUploads(uploadScope, (readyIds) => {
+    const next = [...new Set([...selectedIdsRef.current, ...readyIds])];
+    selectedIdsRef.current = next;
+    setSelectedIdsRef.current(next);
+  });
   const { data: library } = useDocuments({ q: librarySearch, pageSize: 50 });
   const { data: selectedDocuments } = useDocuments({ pageSize: 50 });
 
   function onFile(file?: File) {
-    if (!file || upload.isPending) return;
+    if (!file || upload.isPending || pendingUploads.length > 0) return;
     if (file.type !== "application/pdf" || !file.name.toLowerCase().endsWith(".pdf")) {
       toast.error("Choose a PDF file");
       return;
@@ -75,12 +88,10 @@ export function ChatComposer({
       return;
     }
     upload.mutate(
-      { file, onStage: setUploadStage },
+      { file, scope: uploadScope, onStage: setUploadStage },
       {
-        onSuccess: (doc) => {
-          rememberUploadedFile(doc.id, file);
-          setSelectedIds([...new Set([...selectedIds, doc.id])]);
-          toast.success("PDF is ready to chat");
+        onSuccess: () => {
+          toast.message("PDF uploaded. Processing continues in the background.");
         },
         onError: (error) => toast.error(error instanceof Error ? error.message : "Upload failed"),
       },
@@ -89,6 +100,8 @@ export function ChatComposer({
   }
 
   const uploading = upload.isPending;
+  const processing = pendingUploads.length > 0;
+  const uploadBusy = uploading || processing;
   const stageLabel =
     uploadStage === "preparing"
       ? "Preparing"
@@ -107,6 +120,15 @@ export function ChatComposer({
           <strong>{stageLabel}…</strong>
         </div>
       )}
+      {pendingUploads.map((item) => (
+        <div key={item.id} className="upload-progress-chip" role="status" aria-live="polite">
+          <LoaderCircle size={16} className="animate-spin" />
+          <span className="upload-progress-name" title={item.name}>
+            {item.name}
+          </span>
+          <strong>Processing…</strong>
+        </div>
+      ))}
       {selectedIds.length > 0 && (
         <div className="composer-documents" aria-label="Attached documents">
           {selectedIds.map((id) => {
@@ -144,7 +166,7 @@ export function ChatComposer({
             !window.matchMedia("(pointer: coarse)").matches
           ) {
             event.preventDefault();
-            if (draft.trim() && !pending && !uploading) onSend();
+            if (draft.trim() && !pending && !uploadBusy) onSend();
           }
         }}
         rows={1}
@@ -160,7 +182,7 @@ export function ChatComposer({
         />
         <Popover open={attachOpen} onOpenChange={setAttachOpen}>
           <PopoverTrigger
-            disabled={uploading}
+            disabled={uploadBusy}
             aria-label="Attach a document"
             className="neo-button pink composer-attach"
           >
@@ -250,6 +272,7 @@ export function ChatComposer({
               <button
                 key={option.value}
                 className={`composer-option ${mode === option.value ? "selected" : ""}`}
+                disabled={option.value === "document" && selectedIds.length === 0}
                 onClick={() => {
                   setMode(option.value);
                   setModeOpen(false);
@@ -258,7 +281,11 @@ export function ChatComposer({
                 <option.icon size={18} />
                 <span className="flex-1">
                   <strong className="block text-sm">{option.name}</strong>
-                  <small className="text-muted">{option.description}</small>
+                  <small className="text-muted">
+                    {option.value === "document" && selectedIds.length === 0
+                      ? "Attach a PDF to enable"
+                      : option.description}
+                  </small>
                 </span>
                 {mode === option.value && <Check size={16} />}
               </button>
@@ -330,9 +357,9 @@ export function ChatComposer({
         <button
           type="button"
           className="neo-button blue composer-send"
-          disabled={pending || uploading || !draft.trim()}
+          disabled={pending || uploadBusy || !draft.trim()}
           aria-label="Send message"
-          title={uploading ? "Wait for PDF processing to finish" : "Send message"}
+          title={uploadBusy ? "Wait for PDF processing to finish" : "Send message"}
           onClick={onSend}
         >
           <ArrowUp size={22} strokeWidth={3} />

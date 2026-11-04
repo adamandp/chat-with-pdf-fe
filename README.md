@@ -49,7 +49,7 @@ Run the backend on port 3000 and the frontend on port 3001, with `FRONTEND_ORIGI
 | Chat sidebar / Trash | `GET /chat-sessions`, `GET /chat-sessions/deleted`, `PATCH /chat-sessions/:id`, DELETE / restore / permanent                                                                                             |
 | Chat messages        | `GET /chat/:id/details`, `POST /chat/send`, `POST /chat/:messageId/edit`, `POST /chat/:messageId/regenerate`, `POST /chat/:id/fork`, `PATCH /chat/:messageId/activate`, `POST /chat/:messageId/feedback` |
 | Documents / Trash    | `GET /documents`, `GET /documents/deleted`, `GET /documents/:id`, DELETE / restore / permanent                                                                                                           |
-| Upload               | `POST /document-upload/presigned-url` → signed PUT → `POST /document-upload/:id/process` → poll `GET /documents/:id`                                                                                     |
+| Upload               | `POST /document-upload/presigned-url` → signed PUT → `POST /document-upload/:id/process` → status checks via `GET /documents/:id` (resume on refresh/return to the chat)                                 |
 
 Chat generations stream `started`, `sources`, `token`, `done`, and `error` events, with partial text displayed while the response arrives. The active branch (including feedback, sources and versions) comes from the chat detail endpoint. PDF preview retrieves a signed GET URL on demand.
 
