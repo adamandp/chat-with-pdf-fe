@@ -1,24 +1,22 @@
 import axios from "axios";
 import { axiosInstance } from "@/lib/axios";
-import type { PdfDocument } from "@/interface/document.interface";
 import type { WebResponse } from "@/interface/common.interface";
-import { getDocument } from "@/features/document/document.api";
 
 /** Based on the NestJS document-upload controller:
  * POST /document-upload/presigned-url → PUT upload_url → POST /document-upload/:id/process
- * → GET /documents/:id until READY. Do not send chat while indexing.
+ * Processing is tracked separately so an unfinished worker is never reported as an upload failure.
  */
 export type UploadStage = "preparing" | "uploading" | "processing";
 export type DocumentUploadInput = { file: File; onStage?: (stage: UploadStage) => void };
 type PresignResponse = { document_id: string; upload_url: string; expires_in: number };
-type RawUploadedDocument = { status?: PdfDocument["status"] };
+export type QueuedUpload = { id: string; name: string };
 
-const sleep = (milliseconds: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
-
-export async function uploadDocument({ file, onStage }: DocumentUploadInput): Promise<PdfDocument> {
+export async function uploadDocument({
+  file,
+  onStage,
+}: DocumentUploadInput): Promise<QueuedUpload> {
   onStage?.("preparing");
-  // Presign, PUT, queue processing, then poll for an authoritative READY status.
+  // The PUT and enqueue must succeed before tracking processing in the background.
   const { data: presigned } = await axiosInstance.post<WebResponse<PresignResponse>>(
     "/document-upload/presigned-url",
     { fileName: file.name },
@@ -34,17 +32,5 @@ export async function uploadDocument({ file, onStage }: DocumentUploadInput): Pr
 
   onStage?.("processing");
   await axiosInstance.post(`/document-upload/${document_id}/process`);
-
-  // The process endpoint only queues a job; successful enqueue is not READY.
-  // Poll the authoritative status so chat never searches unfinished embeddings.
-  for (let attempt = 0; attempt < 60; attempt++) {
-    const { data } = await axiosInstance.get<WebResponse<RawUploadedDocument>>(
-      `/documents/${document_id}`,
-    );
-    const document = data.data;
-    if (document.status === "READY") return getDocument(document_id);
-    if (document.status === "FAILED") throw new Error("PDF processing failed");
-    await sleep(2_000);
-  }
-  throw new Error("Document is still processing. Please try again when it is ready.");
+  return { id: document_id, name: file.name };
 }
