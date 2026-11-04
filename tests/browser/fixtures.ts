@@ -5,12 +5,21 @@ export const test = base.extend<{ authenticated: void }>({
   authenticated: [
     async ({ page }, use) => {
       await page.goto("/");
+      const mobileNavigation = page.getByRole("button", { name: "Open navigation" });
+      const isMobile = await mobileNavigation.isVisible();
+      if (isMobile) await mobileNavigation.click();
       await page.getByRole("button", { name: "Account settings" }).click();
       await page.getByRole("button", { name: "Log in", exact: true }).click();
       await page.getByRole("textbox", { name: "Username" }).fill("demo");
       await page.getByLabel("Password").fill("demo12345");
       await page.getByRole("button", { name: "Login", exact: true }).click();
       await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
+      if (isMobile) {
+        await page
+          .getByRole("complementary", { name: "Main navigation" })
+          .getByRole("button", { name: "Close navigation" })
+          .click();
+      }
       await use();
     },
     { auto: true },
