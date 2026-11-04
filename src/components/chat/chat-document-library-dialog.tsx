@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Check, Search } from "lucide-react";
 import type { PdfDocument } from "@/interface/document.interface";
 import { PdfIcon } from "@/components/common/pdf-icon";
 import {
@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 export function ChatDocumentLibraryDialog({
   open,
@@ -30,12 +29,12 @@ export function ChatDocumentLibraryDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="neo-card max-w-[min(94vw,520px)]! bg-white p-4 sm:p-6">
+      <DialogContent className="neo-card library-dialog max-w-[min(94vw,520px)]! bg-white p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-xl font-black">Choose from Library</DialogTitle>
           <DialogDescription>Select one or more PDFs to use in the conversation.</DialogDescription>
         </DialogHeader>
-        <label className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2">
+        <label className="library-search flex items-center gap-2 rounded-lg border px-3 py-2">
           <Search size={18} />
           <input
             value={search}
@@ -45,11 +44,11 @@ export function ChatDocumentLibraryDialog({
             className="min-w-0 w-full outline-none"
           />
         </label>
-        <div className="max-h-[45dvh] overflow-y-auto">
+        <div className="library-items max-h-[45dvh] overflow-y-auto">
           {documents?.map((doc) => (
             <label
               key={doc.id}
-              className="flex cursor-pointer items-center gap-3 border-b px-1 py-3 hover:bg-blue-50"
+              className={`library-item flex cursor-pointer items-center gap-3 border-b px-2 py-3 ${selectedIds.includes(doc.id) ? "is-selected" : ""}`}
             >
               <PdfIcon accent={doc.accent} small />
               <span className="min-w-0 flex-1">
@@ -76,13 +75,17 @@ export function ChatDocumentLibraryDialog({
             <p className="py-8 text-center text-muted">No matching documents.</p>
           )}
         </div>
-        <DialogFooter>
+        <DialogFooter className="library-footer">
           <span className="mr-auto self-center text-sm text-muted">
-            {selectedIds.length} selected
+            {selectedIds.length} {selectedIds.length === 1 ? "document" : "documents"} selected
           </span>
-          <Button className="bg-[#52b1ff]" onClick={() => onOpenChange(false)}>
-            Done
-          </Button>
+          <button
+            type="button"
+            className="neo-button blue library-done"
+            onClick={() => onOpenChange(false)}
+          >
+            <Check size={18} strokeWidth={3} /> Done
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

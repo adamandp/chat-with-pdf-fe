@@ -8,7 +8,7 @@ import {
   MessageSquare,
   Menu,
   PanelLeftClose,
-  PanelLeftOpen,
+  ChevronsRight,
   Plus,
   Search,
   Trash2,
@@ -21,6 +21,8 @@ import { SidebarSessionDialogs } from "./sidebar-session-dialogs";
 import { useChatDrafts } from "@/stores/chat-drafts";
 import { toast } from "sonner";
 import { useInfiniteSessions } from "@/features/chat-session/chat-session.query";
+import { useAuth } from "@/providers/auth-provider";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
   useDeleteSession,
   useRenameSession,
@@ -31,12 +33,14 @@ import type { Session } from "@/interface/chat-session.interface";
 import { toggleSidebarCollapsed, useSidebarCollapsed } from "@/stores/sidebar-preference";
 
 export function AppSidebar() {
+  const { user, loading: authLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const desktopCollapsed = useSidebarCollapsed();
   const toggleDesktopSidebar = toggleSidebarCollapsed;
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [expanded, setExpanded] = useState(false);
   const drafts = useChatDrafts();
   const [renameId, setRenameId] = useState<string | null>(null);
@@ -49,7 +53,10 @@ export function AppSidebar() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useInfiniteSessions(search);
+    isLoading: sessionsLoading,
+    isError: sessionsError,
+    refetch: refetchSessions,
+  } = useInfiniteSessions(debouncedSearch);
   const sessions = sessionPages?.pages.flatMap((page) => page.data) || [];
   const rename = useRenameSession();
   const remove = useDeleteSession();
@@ -132,9 +139,14 @@ export function AppSidebar() {
         >
           <Menu size={21} />
         </button>
-        <span className="mobile-title">
+        <Link
+          href="/"
+          className="mobile-title"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Chat with PDF — New Chat"
+        >
           <ChatPdfLogo size={29} /> Chat with PDF
-        </span>
+        </Link>
         <Link className="neo-button mobile-new-chat" href="/" aria-label="New Chat">
           <Plus size={21} />
         </Link>
@@ -163,8 +175,15 @@ export function AppSidebar() {
       >
         <div className="sidebar-body">
           <div className="brand">
-            <ChatPdfLogo size={46} className="sidebar-brand-logo" />
-            <span className="sidebar-brand-title">Chat with PDF</span>
+            <Link
+              href="/"
+              className="sidebar-brand-link"
+              aria-label="Chat with PDF — New Chat"
+              onClick={() => setMobileOpen(false)}
+            >
+              <ChatPdfLogo size={46} className="sidebar-brand-logo" />
+              <span className="sidebar-brand-title">Chat with PDF</span>
+            </Link>
             <button
               className="sidebar-desktop-toggle"
               type="button"
@@ -172,7 +191,11 @@ export function AppSidebar() {
               aria-label={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              {desktopCollapsed ? <PanelLeftOpen size={21} /> : <PanelLeftClose size={21} />}
+              {desktopCollapsed ? (
+                <ChevronsRight size={22} strokeWidth={3} />
+              ) : (
+                <PanelLeftClose size={21} />
+              )}
             </button>
             <button
               className="ml-auto icon-button mobile-close"
@@ -249,8 +272,27 @@ export function AppSidebar() {
           )}
           <section aria-label="Recent chats" className="mt-4 sidebar-collapse-hide">
             <h2 className="sidebar-section-title">Recents</h2>
+            {(authLoading || sessionsLoading) && (
+              <p className="px-2 py-4 text-sm text-muted">Loading chats...</p>
+            )}
+            {sessionsError && (
+              <p role="alert" className="px-2 py-4 text-sm text-muted">
+                Could not load chats.{" "}
+                <button className="font-bold underline" onClick={() => void refetchSessions()}>
+                  Retry
+                </button>
+              </p>
+            )}
             {recent.slice(0, expanded ? undefined : 6).map(renderSession)}
-            {!recent.length && <p className="px-2 py-4 text-sm text-muted">No matching chats</p>}
+            {!authLoading &&
+              !sessionsLoading &&
+              !sessionsError &&
+              !recent.length &&
+              !pinned.length && (
+                <p className="px-2 py-4 text-sm text-muted">
+                  {user ? (search ? "No matching chats" : "No chats yet") : "No chats yet"}
+                </p>
+              )}
             {(hasNextPage || recent.length > 6 || expanded) && (
               <button
                 className="mt-2 px-2 text-sm font-bold hover:underline"

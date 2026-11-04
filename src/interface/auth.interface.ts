@@ -1,7 +1,8 @@
 export interface AuthUser {
   id: string;
-  username: string;
+  username: string | null;
   name: string | null;
+  accountType: "GUEST" | "REGISTERED";
 }
 
 export interface LoginCredentials {

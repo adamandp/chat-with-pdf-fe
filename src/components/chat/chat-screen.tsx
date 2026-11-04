@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bot, Sparkles } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import type { AnswerMode, ThinkingMode, Source } from "@/interface/chat.interface";
 import type { PdfDocument } from "@/interface/document.interface";
@@ -16,6 +17,7 @@ import {
 } from "@/features/chat/chat.mutation";
 import { useForkSession } from "@/features/chat-session/chat-session.mutation";
 import { useDocuments } from "@/features/document/document.query";
+import { useAuth } from "@/providers/auth-provider";
 import { ChatHeader } from "./chat-header";
 import { ChatMessage } from "./chat-message";
 import { ChatComposer } from "./chat-composer";
@@ -35,10 +37,12 @@ export function ChatScreen({ sessionId }: { sessionId?: string }) {
 }
 
 function ChatScreenContent({ sessionId }: { sessionId?: string }) {
+  const { user, loading: authLoading } = useAuth();
+  const reduceMotion = useReducedMotion();
   const router = useRouter();
   const { data: session, isError: sessionError } = useSession(sessionId);
   const { data: detail } = useChatDetail(sessionId);
-  const { data: messages = [], isPending: messagesPending } = useMessages(sessionId);
+  const { data: messages = [], isLoading: messagesLoading } = useMessages(sessionId);
   const { data: documentResponse } = useDocuments({ pageSize: 100 });
   const allDocuments = [
     ...(documentResponse?.data || []),
@@ -72,6 +76,7 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
   const activate = useActivateVersion();
   const [streamed, setStreamed] = useState("");
   const streaming = send.isPending || edit.isPending || regenerate.isPending;
+  const historyNeedsSession = Boolean(sessionId) && !authLoading && !user;
 
   // Scroll only the chat thread. scrollIntoView() also scrolls outer ancestors on iOS,
   // which caused the banner to overlap messages and shift the viewport.
@@ -234,30 +239,46 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
               Chat not found or was deleted.
             </p>
           )}
-          {sessionId && messagesPending && (
+          {sessionId && (authLoading || messagesLoading) && (
             <p role="status" className="p-10 text-center text-muted">
               Loading conversation...
             </p>
           )}
+          {historyNeedsSession && (
+            <p role="status" className="p-10 text-center text-muted">
+              Sign in from Account settings to view this conversation, or start a new chat.
+            </p>
+          )}
           {!sessionId && (
             <div className="mx-auto flex min-h-full max-w-2xl flex-col items-center justify-center gap-5 pb-10 text-center">
-              <span className="neo-card yellow grid size-20 place-items-center shadow-none">
+              <motion.span
+                className="neo-card yellow grid size-20 place-items-center shadow-none"
+                initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ type: "spring", stiffness: 240, damping: 22 }}
+              >
                 <Sparkles size={40} />
-              </span>
+              </motion.span>
               <h2 className="text-3xl font-black">Your documents, explained.</h2>
               <p className="max-w-lg text-muted">
                 Ask questions about your PDFs, compare reports, and jump directly to the pages
                 behind each answer.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                {suggestions.map((suggestion) => (
-                  <button
+                {suggestions.map((suggestion, index) => (
+                  <motion.button
                     key={suggestion}
-                    className="rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-bold hover:bg-[#ffe65b]"
+                    type="button"
+                    className="chat-suggestion rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-bold"
+                    initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={reduceMotion ? undefined : { y: -2 }}
+                    whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+                    transition={{ duration: 0.2, delay: reduceMotion ? 0 : index * 0.06 }}
                     onClick={() => setDraft(suggestion)}
                   >
                     {suggestion}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
               {process.env.NEXT_PUBLIC_API_MOCKING !== "disabled" && (
@@ -308,18 +329,20 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
             </div>
           )}
         </div>
-        <ChatComposer
-          draft={draft}
-          setDraft={setDraft}
-          mode={mode}
-          setMode={setMode}
-          thinking={thinking}
-          setThinking={setThinking}
-          selectedIds={selectedIds}
-          setSelectedIds={setSelectedIds}
-          onSend={sendMessage}
-          pending={streaming}
-        />
+        {(!sessionId || (!authLoading && user)) && (
+          <ChatComposer
+            draft={draft}
+            setDraft={setDraft}
+            mode={mode}
+            setMode={setMode}
+            thinking={thinking}
+            setThinking={setThinking}
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+            onSend={sendMessage}
+            pending={streaming}
+          />
+        )}
       </div>
       {preview && (
         <>

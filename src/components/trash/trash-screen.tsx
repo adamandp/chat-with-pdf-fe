@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { FileText, MessageSquare, RotateCcw, Trash2 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import { relativeTime } from "@/lib/format";
 import { useSessions } from "@/features/chat-session/chat-session.query";
 import { useDeleteSession, useRestoreSession } from "@/features/chat-session/chat-session.mutation";
 import { useDocuments } from "@/features/document/document.query";
 import { useDeleteDocument, useRestoreDocument } from "@/features/document/document.mutation";
+import { useAuth } from "@/providers/auth-provider";
 import { PdfIcon } from "@/components/common/pdf-icon";
+import { NeoActionMenu } from "@/components/common/neo-action-menu";
 import { Pagination } from "@/components/common/pagination";
 import {
   Dialog,
@@ -23,19 +26,26 @@ import { Button } from "@/components/ui/button";
 type DeleteTarget = { type: "chat" | "document"; id: string; title: string };
 
 export function TrashScreen() {
+  const { user, loading: authLoading } = useAuth();
+  const reduceMotion = useReducedMotion();
   const [chatPage, setChatPage] = useState(1);
   const [chatPageSize, setChatPageSize] = useState(4);
   const [documentPageSize, setDocumentPageSize] = useState(4);
   const [documentPage, setDocumentPage] = useState(1);
   const [toDelete, setToDelete] = useState<DeleteTarget | null>(null);
-  const { data: chatResponse, isPending: chatsPending } = useSessions(
-    true,
-    "",
-    chatPage,
-    chatPageSize,
-  );
+  const {
+    data: chatResponse,
+    isLoading: chatsLoading,
+    isError: chatsError,
+    refetch: refetchChats,
+  } = useSessions(true, "", chatPage, chatPageSize);
   const chats = chatResponse?.data || [];
-  const { data: documents, isPending: documentsPending } = useDocuments({
+  const {
+    data: documents,
+    isLoading: documentsLoading,
+    isError: documentsError,
+    refetch: refetchDocuments,
+  } = useDocuments({
     deleted: true,
     page: documentPage,
     pageSize: documentPageSize,
@@ -94,12 +104,28 @@ export function TrashScreen() {
             <p className="text-muted">Deleted chats are stored here</p>
           </div>
         </div>
-        {chatsPending && <p className="py-10 text-center text-muted">Loading deleted chats…</p>}
-        {!chatsPending && chats.length === 0 && (
+        {(authLoading || chatsLoading) && (
+          <p className="py-10 text-center text-muted">Loading deleted chats…</p>
+        )}
+        {chatsError && (
+          <p role="alert" className="py-10 text-center text-muted">
+            Could not load deleted chats.{" "}
+            <button className="font-bold underline" onClick={() => void refetchChats()}>
+              Retry
+            </button>
+          </p>
+        )}
+        {!authLoading && !chatsLoading && !chatsError && chats.length === 0 && (
           <p className="py-10 text-center text-muted">No deleted chats.</p>
         )}
         {chats.map((chat, index) => (
-          <div className="history-row" key={chat.id}>
+          <motion.div
+            className="history-row"
+            key={chat.id}
+            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: reduceMotion ? 0 : Math.min(index * 0.035, 0.14) }}
+          >
             <span
               className={`neo-card grid size-12 shrink-0 place-items-center shadow-none ${["yellow", "blue", "mint", "purple"][index % 4]}`}
             >
@@ -109,24 +135,24 @@ export function TrashScreen() {
               <strong className="block truncate">{chat.title}</strong>
               <p className="text-sm text-muted">Last updated {relativeTime(chat.updatedAt)}</p>
             </div>
-            <div className="flex gap-2">
-              <button
-                aria-label={`Restore ${chat.title}`}
-                title="Restore"
-                className="icon-button border border-black hover:bg-green-100"
-                onClick={() => onRestore("chat", chat.id)}
-              >
-                <RotateCcw size={18} />
-              </button>
-              <button
-                className="neo-button pink flex items-center gap-2 px-3 py-2 text-sm"
-                onClick={() => setToDelete({ type: "chat", id: chat.id, title: chat.title })}
-              >
-                <Trash2 size={17} />
-                <span className="hidden sm:inline">Delete</span>
-              </button>
-            </div>
-          </div>
+            <NeoActionMenu
+              label={`Actions for ${chat.title}`}
+              actions={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  tone: "mint",
+                  onSelect: () => onRestore("chat", chat.id),
+                },
+                {
+                  label: "Delete",
+                  icon: Trash2,
+                  tone: "pink",
+                  onSelect: () => setToDelete({ type: "chat", id: chat.id, title: chat.title }),
+                },
+              ]}
+            />
+          </motion.div>
         ))}
         <Pagination
           currentPage={Math.min(chatPage, chatTotalPages)}
@@ -153,14 +179,31 @@ export function TrashScreen() {
             <p className="text-muted">Deleted documents are stored here</p>
           </div>
         </div>
-        {documentsPending && (
+        {(authLoading || documentsLoading) && (
           <p className="py-10 text-center text-muted">Loading deleted documents…</p>
         )}
-        {documents && !documents.data.length && (
-          <p className="py-10 text-center text-muted">No deleted documents.</p>
+        {documentsError && (
+          <p role="alert" className="py-10 text-center text-muted">
+            Could not load deleted documents.{" "}
+            <button className="font-bold underline" onClick={() => void refetchDocuments()}>
+              Retry
+            </button>
+          </p>
         )}
-        {documents?.data.map((doc) => (
-          <div className="history-row" key={doc.id}>
+        {!authLoading &&
+          !documentsLoading &&
+          !documentsError &&
+          (!user || (documents && documents.data.length === 0)) && (
+            <p className="py-10 text-center text-muted">No deleted documents.</p>
+          )}
+        {documents?.data.map((doc, index) => (
+          <motion.div
+            className="history-row"
+            key={doc.id}
+            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: reduceMotion ? 0 : Math.min(index * 0.035, 0.14) }}
+          >
             <PdfIcon accent={doc.accent} small />
             <div className="min-w-0 flex-1">
               <strong className="block truncate">{doc.name}</strong>
@@ -168,24 +211,24 @@ export function TrashScreen() {
                 {doc.pages} pages • Deleted {relativeTime(doc.deletedAt!)}
               </p>
             </div>
-            <div className="flex gap-2">
-              <button
-                aria-label={`Restore ${doc.name}`}
-                title="Restore"
-                className="icon-button border border-black hover:bg-green-100"
-                onClick={() => onRestore("document", doc.id)}
-              >
-                <RotateCcw size={18} />
-              </button>
-              <button
-                className="neo-button pink flex items-center gap-2 px-3 py-2 text-sm"
-                onClick={() => setToDelete({ type: "document", id: doc.id, title: doc.name })}
-              >
-                <Trash2 size={17} />
-                <span className="hidden sm:inline">Delete</span>
-              </button>
-            </div>
-          </div>
+            <NeoActionMenu
+              label={`Actions for ${doc.name}`}
+              actions={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  tone: "mint",
+                  onSelect: () => onRestore("document", doc.id),
+                },
+                {
+                  label: "Delete",
+                  icon: Trash2,
+                  tone: "pink",
+                  onSelect: () => setToDelete({ type: "document", id: doc.id, title: doc.name }),
+                },
+              ]}
+            />
+          </motion.div>
         ))}
         <Pagination
           currentPage={documents?.paging?.currentPage || 1}

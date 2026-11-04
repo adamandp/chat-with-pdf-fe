@@ -14,7 +14,11 @@ export function useRenameSession() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) => renameSession(id, title),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.all }),
+    onSuccess: (_, { id }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: sessionKeys.all }),
+        queryClient.invalidateQueries({ queryKey: sessionKeys.detail(id) }),
+      ]),
   });
 }
 

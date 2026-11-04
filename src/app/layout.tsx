@@ -13,6 +13,7 @@ import "@/styles/compact-controls.css";
 import "@/styles/overlay-interaction.css";
 import "@/styles/pagination.css";
 import "@/styles/workspace-polish.css";
+import "@/styles/ui-refinements.css";
 
 export const metadata: Metadata = {
   title: "Chat with PDF",

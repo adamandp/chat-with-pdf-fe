@@ -1,7 +1,8 @@
 import { http, HttpResponse } from "msw";
 import type { AuthUser } from "@/interface/auth.interface";
+import { activateWorkspace, DEMO_USER_ID } from "../data/store";
 
-type DemoUser = AuthUser & { passwordHash: string; passwordSalt?: string };
+type DemoUser = AuthUser & { passwordHash: string | null; passwordSalt?: string };
 const usersKey = "chat-with-pdf:demo-users:v1";
 const sessionKey = "chat-with-pdf:demo-login:v1";
 
@@ -24,13 +25,18 @@ function save(key: string, value: unknown) {
 }
 
 const builtInUser: DemoUser = {
-  id: "00000000-0000-4000-8000-000000000001",
+  id: DEMO_USER_ID,
   username: "demo",
   name: "Demo User",
+  accountType: "REGISTERED",
   passwordHash: "",
 };
-let users = saved<DemoUser[]>(usersKey, [builtInUser]);
+let users = saved<DemoUser[]>(usersKey, [builtInUser]).map((user) => ({
+  ...user,
+  accountType: user.accountType || "REGISTERED",
+}));
 let activeUserId = saved<string | null>(sessionKey, null);
+if (activeUserId) activateWorkspace(activeUserId);
 
 async function hashPassword(password: string, salt: string) {
   const baseKey = await crypto.subtle.importKey(
@@ -56,10 +62,35 @@ async function hashPassword(password: string, salt: string) {
 function activeUser(): AuthUser | null {
   const profile = users.find((item) => item.id === activeUserId);
   if (!profile) return null;
-  return { id: profile.id, username: profile.username, name: profile.name };
+  return {
+    id: profile.id,
+    username: profile.username,
+    name: profile.name,
+    accountType: profile.accountType,
+  };
 }
 
 export const authHandlers = [
+  http.post("*/api/auth/guest", () => {
+    if (!activeUser()) {
+      const guest: DemoUser = {
+        id: crypto.randomUUID(),
+        username: null,
+        name: null,
+        accountType: "GUEST",
+        passwordHash: null,
+      };
+      users = [...users, guest];
+      activeUserId = guest.id;
+      save(usersKey, users);
+      save(sessionKey, activeUserId);
+      activateWorkspace(activeUserId);
+    }
+    return HttpResponse.json({
+      message: "Guest session created",
+      data: { accessToken: "mock-access-token" },
+    });
+  }),
   http.post("*/api/auth/register", async ({ request }) => {
     const payload = (await request.json()) as {
       username?: string;
@@ -77,24 +108,36 @@ export const authHandlers = [
       return HttpResponse.json({ message: "Invalid registration details" }, { status: 400 });
     if (users.some((item) => item.username === username))
       return HttpResponse.json({ message: "Username is already taken" }, { status: 409 });
+    if (activeUser()?.accountType === "REGISTERED") {
+      return HttpResponse.json({ message: "Already logged in" }, { status: 400 });
+    }
     const passwordSalt = [...crypto.getRandomValues(new Uint8Array(16))]
       .map((byte) => byte.toString(16).padStart(2, "0"))
       .join("");
-    users = [
-      ...users,
-      {
-        id: crypto.randomUUID(),
+    const guest = users.find((item) => item.id === activeUserId && item.accountType === "GUEST");
+    const registered: DemoUser = {
+        id: guest?.id || crypto.randomUUID(),
         username,
         name: payload.name || null,
+        accountType: "REGISTERED",
         passwordSalt,
         passwordHash: await hashPassword(payload.password, passwordSalt),
-      },
-    ];
+    };
+    users = guest
+      ? users.map((item) => (item.id === guest.id ? registered : item))
+      : [...users, registered];
+    if (guest) {
+      activeUserId = null;
+      save(sessionKey, null);
+    }
     save(usersKey, users);
     return HttpResponse.json({ message: "Registered successfully" }, { status: 201 });
   }),
   http.post("*/api/auth/login", async ({ request }) => {
     const payload = (await request.json()) as { username?: string; password?: string };
+    if (activeUser()?.accountType === "REGISTERED") {
+      return HttpResponse.json({ message: "Already logged in" }, { status: 400 });
+    }
     const user = users.find((item) => item.username === payload.username);
     const valid =
       user?.id === builtInUser.id
@@ -108,6 +151,7 @@ export const authHandlers = [
       return HttpResponse.json({ message: "Invalid username or password" }, { status: 401 });
     activeUserId = user.id;
     save(sessionKey, activeUserId);
+    activateWorkspace(activeUserId);
     return HttpResponse.json({
       message: "Login successful",
       data: { accessToken: "mock-access-token" },
@@ -130,11 +174,13 @@ export const authHandlers = [
   http.post("*/api/auth/logout", () => {
     activeUserId = null;
     save(sessionKey, null);
+    activateWorkspace(null);
     return HttpResponse.json({ message: "Logged out" });
   }),
   http.post("*/api/auth/logout-all", () => {
     activeUserId = null;
     save(sessionKey, null);
+    activateWorkspace(null);
     return HttpResponse.json({ message: "All sessions logged out" });
   }),
 ];
