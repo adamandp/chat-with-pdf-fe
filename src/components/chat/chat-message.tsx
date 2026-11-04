@@ -4,6 +4,8 @@ import { useState } from "react";
 import {
   Bot,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   GitFork,
   Pencil,
@@ -17,7 +19,7 @@ import { toast } from "sonner";
 import type { ChatMessage as Message, Source } from "@/interface/chat.interface";
 import type { PdfDocument } from "@/interface/document.interface";
 import { shortTime } from "@/lib/format";
-import { useEditMessage, useFeedback } from "@/features/chat/chat.mutation";
+import { useFeedback } from "@/features/chat/chat.mutation";
 import { PdfIcon } from "@/components/common/pdf-icon";
 import { ChatRichText } from "./chat-rich-text";
 
@@ -27,33 +29,29 @@ export function ChatMessage({
   onSource,
   onFork,
   onRegenerate,
+  onEdit,
+  onActivateVersion,
   forking = false,
   regenerating = false,
+  editingPending = false,
 }: {
   message: Message;
   documents: PdfDocument[];
   onSource: (source: Source) => void;
   onFork?: () => void;
   onRegenerate?: () => void;
+  onEdit?: (content: string, onSuccess: () => void) => void;
+  onActivateVersion?: (id: string) => void;
   forking?: boolean;
   regenerating?: boolean;
+  editingPending?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.content);
-  const edit = useEditMessage();
   const feedback = useFeedback();
   const isUser = message.role === "user";
   function saveEdit() {
-    edit.mutate(
-      { id: message.id, content: draft.trim() },
-      {
-        onSuccess: () => {
-          toast.success("Message updated");
-          setEditing(false);
-        },
-        onError: () => toast.error("Could not update message"),
-      },
-    );
+    onEdit?.(draft.trim(), () => setEditing(false));
   }
   async function copy() {
     try {
@@ -94,7 +92,7 @@ export function ChatMessage({
                   <X size={14} /> Cancel
                 </button>
                 <button
-                  disabled={!draft.trim() || edit.isPending}
+                  disabled={!draft.trim() || editingPending}
                   className="neo-button flex items-center gap-1 bg-[#8acaff] px-3 py-2 text-sm font-bold"
                   onClick={saveEdit}
                 >
@@ -136,7 +134,7 @@ export function ChatMessage({
             </div>
           )}
           <div className="mt-2 text-right text-xs text-muted">
-            {message.regenerationCount ? `Regenerated ${message.regenerationCount} · ` : ""}
+            {(message.versionCount || 0) > 1 ? `${message.versionCount} versions · ` : ""}
             {shortTime(message.createdAt)}
           </div>
         </div>
@@ -160,7 +158,9 @@ export function ChatMessage({
                   aria-label="Good response"
                   title="Good response"
                   className={`icon-button ${message.feedback === "up" ? "bg-blue-200" : ""}`}
-                  onClick={() => feedback.mutate({ id: message.id, rating: "up" })}
+                  onClick={() =>
+                    feedback.mutate({ id: message.id, sessionId: message.sessionId, rating: "up" })
+                  }
                 >
                   <ThumbsUp size={17} />
                 </button>
@@ -168,7 +168,13 @@ export function ChatMessage({
                   aria-label="Poor response"
                   title="Poor response"
                   className={`icon-button ${message.feedback === "down" ? "bg-blue-200" : ""}`}
-                  onClick={() => feedback.mutate({ id: message.id, rating: "down" })}
+                  onClick={() =>
+                    feedback.mutate({
+                      id: message.id,
+                      sessionId: message.sessionId,
+                      rating: "down",
+                    })
+                  }
                 >
                   <ThumbsDown size={17} />
                 </button>
@@ -203,6 +209,41 @@ export function ChatMessage({
               >
                 <RefreshCcw size={17} className={regenerating ? "animate-spin" : ""} />
               </button>
+            )}
+            {(message.versions?.length || 0) > 1 && onActivateVersion && (
+              <div
+                className="ml-1 flex items-center gap-1 text-xs font-bold"
+                aria-label="Message versions"
+              >
+                <button
+                  className="icon-button"
+                  aria-label="Previous version"
+                  disabled={message.versions!.findIndex((item) => item.id === message.id) <= 0}
+                  onClick={() => {
+                    const index = message.versions!.findIndex((item) => item.id === message.id);
+                    if (index > 0) onActivateVersion(message.versions![index - 1].id);
+                  }}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                {message.versions!.findIndex((item) => item.id === message.id) + 1}/
+                {message.versions!.length}
+                <button
+                  className="icon-button"
+                  aria-label="Next version"
+                  disabled={
+                    message.versions!.findIndex((item) => item.id === message.id) >=
+                    message.versions!.length - 1
+                  }
+                  onClick={() => {
+                    const index = message.versions!.findIndex((item) => item.id === message.id);
+                    if (index < message.versions!.length - 1)
+                      onActivateVersion(message.versions![index + 1].id);
+                  }}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             )}
           </div>
         )}

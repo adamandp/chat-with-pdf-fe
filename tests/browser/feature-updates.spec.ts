@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("fork from assistant produces independent chat history", async ({ page }) => {
   await page.goto("/chats/session-1");
@@ -6,7 +6,7 @@ test("fork from assistant produces independent chat history", async ({ page }) =
   const sourceMessages = await page.locator(".message-line").count();
   await page.getByRole("button", { name: "Fork chat from this message" }).last().click();
   await expect(page).toHaveURL(/\/chats\/(?!session-1)[a-z0-9-]+$/i);
-  await expect(page.locator(".chat-banner")).toContainText("Fork: Q3 Financial Summary");
+  await expect(page.locator(".chat-banner")).toContainText("Fork → Q3 Financial Summary");
   await expect(page.locator(".message-line")).toHaveCount(sourceMessages);
   await page.goto("/chats/session-1");
   await expect(page.locator(".message-line")).toHaveCount(sourceMessages);
@@ -25,11 +25,11 @@ test("regenerate updates selected answer rather than adding a duplicate", async 
   const messages = page.locator(".message-line");
   await expect(messages).toHaveCount(2);
   await page.getByRole("button", { name: "Regenerate answer" }).click();
-  await expect(page.getByText("Regenerated 1", { exact: false })).toBeVisible();
-  await expect(page.getByText("Regenerated demo response #1", { exact: false })).toBeVisible();
+  await expect(page.getByText("2 versions", { exact: false })).toBeVisible();
+  await expect(page.getByText("Demo version 2", { exact: false })).toBeVisible();
   await expect(messages).toHaveCount(2);
   await page.getByRole("button", { name: "Regenerate answer" }).click();
-  await expect(page.getByText("Regenerated 2", { exact: false })).toBeVisible();
+  await expect(page.getByText("3 versions", { exact: false })).toBeVisible();
   await expect(messages).toHaveCount(2);
 });
 

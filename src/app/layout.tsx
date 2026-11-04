@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MockProvider } from "@/providers/mock-provider";
 import { QueryProvider } from "@/providers/query-provider";
+import { AuthProvider } from "@/providers/auth-provider";
 import { ThemedToaster } from "@/components/theme/themed-toaster";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
@@ -12,6 +13,7 @@ import "@/styles/compact-controls.css";
 import "@/styles/overlay-interaction.css";
 import "@/styles/pagination.css";
 import "@/styles/workspace-polish.css";
+import "@/styles/ui-refinements.css";
 
 export const metadata: Metadata = {
   title: "Chat with PDF",
@@ -30,8 +32,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         >
           <MockProvider enabled={process.env.NEXT_PUBLIC_API_MOCKING !== "disabled"}>
             <QueryProvider>
-              {children}
-              <ThemedToaster />
+              <AuthProvider>
+                {children}
+                <ThemedToaster />
+              </AuthProvider>
             </QueryProvider>
           </MockProvider>
         </ThemeProvider>

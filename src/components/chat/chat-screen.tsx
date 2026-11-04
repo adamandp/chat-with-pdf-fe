@@ -3,19 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bot, Sparkles } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import type { AnswerMode, ThinkingMode, Source } from "@/interface/chat.interface";
 import type { PdfDocument } from "@/interface/document.interface";
 import { useSession } from "@/features/chat-session/chat-session.query";
-import { useMessages } from "@/features/chat/chat.query";
-import { useRegenerateAnswer, useSendChat } from "@/features/chat/chat.mutation";
+import { useChatDetail, useMessages } from "@/features/chat/chat.query";
+import {
+  useActivateVersion,
+  useEditMessage,
+  useRegenerateAnswer,
+  useSendChat,
+} from "@/features/chat/chat.mutation";
 import { useForkSession } from "@/features/chat-session/chat-session.mutation";
 import { useDocuments } from "@/features/document/document.query";
+import { useAuth } from "@/providers/auth-provider";
 import { ChatHeader } from "./chat-header";
 import { ChatMessage } from "./chat-message";
 import { ChatComposer } from "./chat-composer";
 import { getChatDraft, moveChatDraft, setChatDraft, useSessionDraft } from "@/stores/chat-drafts";
 import { PdfViewer } from "@/components/pdf/pdf-viewer";
+import { ChatRichText } from "./chat-rich-text";
 
 type Preview = { document: PdfDocument; page: number };
 const suggestions = [
@@ -29,16 +37,31 @@ export function ChatScreen({ sessionId }: { sessionId?: string }) {
 }
 
 function ChatScreenContent({ sessionId }: { sessionId?: string }) {
+  const { user, loading: authLoading } = useAuth();
+  const reduceMotion = useReducedMotion();
   const router = useRouter();
   const { data: session, isError: sessionError } = useSession(sessionId);
-  const { data: messages = [], isPending: messagesPending } = useMessages(sessionId);
-  const { data: documentResponse } = useDocuments({ pageSize: 50 });
-  const allDocuments = documentResponse?.data || [];
+  const { data: detail } = useChatDetail(sessionId);
+  const { data: messages = [], isLoading: messagesLoading } = useMessages(sessionId);
+  const { data: documentResponse } = useDocuments({ pageSize: 100 });
+  const allDocuments = [
+    ...(documentResponse?.data || []),
+    ...(detail?.documents || []).filter(
+      (document) => !(documentResponse?.data || []).some((item) => item.id === document.id),
+    ),
+  ];
   const [draft, setDraft] = useSessionDraft(sessionId);
-  const [mode, setMode] = useState<AnswerMode>("document");
+  const [modeOverride, setMode] = useState<AnswerMode | null>(null);
+  const mode: AnswerMode =
+    modeOverride ?? (session?.answerMode === "general" ? "general" : "document");
   const [thinking, setThinking] = useState<ThinkingMode>("quick");
   const [selectedOverride, setSelectedOverride] = useState<string[] | null>(null);
-  const selectedIds = selectedOverride ?? session?.documentIds ?? [];
+  const selectedIds =
+    selectedOverride ??
+    (session?.documentIds || []).filter((id) => {
+      const document = detail?.documents.find((item) => item.id === id);
+      return document && document.status === "READY" && !document.deletedAt;
+    });
   const setSelectedIds = setSelectedOverride;
   const [preview, setPreview] = useState<Preview | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -49,17 +72,22 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
   const send = useSendChat();
   const fork = useForkSession();
   const regenerate = useRegenerateAnswer();
+  const edit = useEditMessage();
+  const activate = useActivateVersion();
+  const [streamed, setStreamed] = useState("");
+  const streaming = send.isPending || edit.isPending || regenerate.isPending;
+  const historyNeedsSession = Boolean(sessionId) && !authLoading && !user;
 
   // Scroll only the chat thread. scrollIntoView() also scrolls outer ancestors on iOS,
   // which caused the banner to overlap messages and shift the viewport.
   useEffect(() => {
     const thread = threadRef.current;
     if (thread) thread.scrollTop = thread.scrollHeight;
-  }, [messages.length, send.isPending]);
+  }, [messages.length, streaming, streamed]);
 
   function onThreadScroll() {
     const thread = threadRef.current;
-    if (!thread || send.isPending) return;
+    if (!thread || streaming) return;
     const maxScroll = thread.scrollHeight - thread.clientHeight;
     // A short conversation cannot scroll: keep its header compact once chatting.
     if (maxScroll <= 12) {
@@ -73,18 +101,33 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
 
   function openSource(source: Source) {
     const document = allDocuments.find((item) => item.id === source.documentId);
-    if (!document) {
+    if (
+      !document ||
+      document.status === "DELETED" ||
+      document.status === "DELETING" ||
+      document.deletedAt
+    ) {
       toast.error("This source document is no longer available");
       return;
     }
     setPreview({ document, page: source.page });
   }
   function sendMessage() {
-    if (!draft.trim() || send.isPending) return;
+    if (!draft.trim() || streaming) return;
     setHeaderCollapsed(true);
+    setStreamed("");
     const sentDraft = draft;
     send.mutate(
-      { sessionId, message: draft.trim(), mode, thinkingMode: thinking, documentIds: selectedIds },
+      {
+        sessionId,
+        message: draft.trim(),
+        mode,
+        thinkingMode: thinking,
+        documentIds: selectedIds,
+        onEvent: (event) => {
+          if (event.type === "token") setStreamed((value) => value + event.data.content);
+        },
+      },
       {
         onSuccess: (response) => {
           // Never delete a newer draft the user typed while the request was pending.
@@ -97,6 +140,7 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
           }
         },
         onError: () => toast.error("Could not send message. Your draft is still here."),
+        onSettled: () => setStreamed(""),
       },
     );
   }
@@ -116,10 +160,44 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
   function regenerateAt(messageId: string) {
     if (!sessionId || regenerate.isPending) return;
     regenerate.mutate(
-      { messageId, mode, thinkingMode: thinking },
+      {
+        messageId,
+        thinkingMode: thinking,
+        onEvent: (event) => {
+          if (event.type === "token") setStreamed((value) => value + event.data.content);
+        },
+      },
       {
         onSuccess: () => toast.success("Response regenerated"),
         onError: () => toast.error("Could not regenerate response"),
+        onSettled: () => setStreamed(""),
+      },
+    );
+  }
+  function editAt(messageId: string, content: string, onSuccess: () => void) {
+    if (!sessionId || edit.isPending) return;
+    setStreamed("");
+    edit.mutate(
+      {
+        id: messageId,
+        input: {
+          sessionId,
+          message: content,
+          mode,
+          thinkingMode: thinking,
+          documentIds: selectedIds,
+          onEvent: (event) => {
+            if (event.type === "token") setStreamed((value) => value + event.data.content);
+          },
+        },
+      },
+      {
+        onSuccess: () => {
+          onSuccess();
+          toast.success("Message edited; a new branch was created");
+        },
+        onError: () => toast.error("Could not edit message"),
+        onSettled: () => setStreamed(""),
       },
     );
   }
@@ -145,7 +223,13 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
           createdAt={session?.createdAt}
           attachments={attachments}
           collapsed={headerCollapsed}
-          onPreview={(document) => setPreview({ document, page: 1 })}
+          onPreview={(document) => {
+            if (document.status === "DELETED" || document.deletedAt) {
+              toast.error("This PDF has been deleted");
+              return;
+            }
+            setPreview({ document, page: 1 });
+          }}
           onHidePreview={() => setPreview(null)}
           hasPreview={Boolean(preview)}
         />
@@ -155,35 +239,53 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
               Chat not found or was deleted.
             </p>
           )}
-          {sessionId && messagesPending && (
+          {sessionId && (authLoading || messagesLoading) && (
             <p role="status" className="p-10 text-center text-muted">
               Loading conversation...
             </p>
           )}
+          {historyNeedsSession && (
+            <p role="status" className="p-10 text-center text-muted">
+              Sign in from Account settings to view this conversation, or start a new chat.
+            </p>
+          )}
           {!sessionId && (
             <div className="mx-auto flex min-h-full max-w-2xl flex-col items-center justify-center gap-5 pb-10 text-center">
-              <span className="neo-card yellow grid size-20 place-items-center shadow-none">
+              <motion.span
+                className="neo-card yellow grid size-20 place-items-center shadow-none"
+                initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ type: "spring", stiffness: 240, damping: 22 }}
+              >
                 <Sparkles size={40} />
-              </span>
+              </motion.span>
               <h2 className="text-3xl font-black">Your documents, explained.</h2>
               <p className="max-w-lg text-muted">
                 Ask questions about your PDFs, compare reports, and jump directly to the pages
                 behind each answer.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                {suggestions.map((suggestion) => (
-                  <button
+                {suggestions.map((suggestion, index) => (
+                  <motion.button
                     key={suggestion}
-                    className="rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-bold hover:bg-[#ffe65b]"
+                    type="button"
+                    className="chat-suggestion rounded-lg border-2 border-black bg-white px-3 py-2 text-sm font-bold"
+                    initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={reduceMotion ? undefined : { y: -2 }}
+                    whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+                    transition={{ duration: 0.2, delay: reduceMotion ? 0 : index * 0.06 }}
                     onClick={() => setDraft(suggestion)}
                   >
                     {suggestion}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
-              <p className="text-xs text-muted">
-                Demo mode: chat answers are simulated. No real AI is connected yet.
-              </p>
+              {process.env.NEXT_PUBLIC_API_MOCKING !== "disabled" && (
+                <p className="text-xs text-muted">
+                  Demo mode: answers are simulated. Local mode connects to your backend.
+                </p>
+              )}
             </div>
           )}
           {messages.map((message) => (
@@ -198,31 +300,49 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
                 message.role === "assistant" ? () => regenerateAt(message.id) : undefined
               }
               regenerating={regenerate.isPending && regenerate.variables?.messageId === message.id}
+              onEdit={
+                message.role === "user"
+                  ? (content, done) => editAt(message.id, content, done)
+                  : undefined
+              }
+              editingPending={edit.isPending && edit.variables?.id === message.id}
+              onActivateVersion={(id) =>
+                activate.mutate(
+                  { messageId: id, sessionId: message.sessionId },
+                  { onError: () => toast.error("Could not activate version") },
+                )
+              }
             />
           ))}
-          {send.isPending && (
+          {streaming && (
             <div className="message-line">
               <span className="avatar bot">
                 <Bot size={25} />
               </span>
-              <div className="message-bubble text-muted" role="status">
-                Thinking about your question…
+              <div className="message-bubble" role="status">
+                {streamed ? (
+                  <ChatRichText content={streamed} onCitation={() => {}} />
+                ) : (
+                  "Thinking about your question…"
+                )}
               </div>
             </div>
           )}
         </div>
-        <ChatComposer
-          draft={draft}
-          setDraft={setDraft}
-          mode={mode}
-          setMode={setMode}
-          thinking={thinking}
-          setThinking={setThinking}
-          selectedIds={selectedIds}
-          setSelectedIds={setSelectedIds}
-          onSend={sendMessage}
-          pending={send.isPending}
-        />
+        {(!sessionId || (!authLoading && user)) && (
+          <ChatComposer
+            draft={draft}
+            setDraft={setDraft}
+            mode={mode}
+            setMode={setMode}
+            thinking={thinking}
+            setThinking={setThinking}
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+            onSend={sendMessage}
+            pending={streaming}
+          />
+        )}
       </div>
       {preview && (
         <>

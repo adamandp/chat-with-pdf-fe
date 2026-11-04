@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("desktop sidebar collapses into rail and account switch stays usable", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -77,19 +77,27 @@ for (const pathname of ["/", "/chats/session-1", "/documents", "/trash"]) {
     } else {
       if (pathname === "/documents")
         await expect(page.locator(".document-card").first()).toBeVisible();
-      else await expect(page.locator(".history-row").first()).toBeVisible();
+      else {
+        await expect(page.locator(".history-row").first()).toBeVisible();
+        // Trash fetches chats and documents independently. Wait for both lists
+        // before scrolling, otherwise the second response can grow the page
+        // between the scroll and bottom-spacing measurements.
+        await expect(
+          page.locator('[aria-labelledby="deleted-docs-heading"] .history-row').first(),
+        ).toBeVisible();
+      }
       const main = page.locator(".workspace-main");
-      await main.evaluate((node) => {
+      // Scroll and measure in the same browser task: asynchronous page updates
+      // can otherwise alter the scroll height between separate evaluations.
+      const { gap, visibleBottom } = await main.evaluate((node) => {
         node.scrollTop = node.scrollHeight;
-      });
-      const gap = await main.evaluate(
-        (node) => node.scrollHeight - node.scrollTop - node.clientHeight,
-      );
-      expect(gap).toBeLessThanOrEqual(1);
-      const visibleBottom = await main.evaluate((node) => {
         const last = node.querySelector(".screen")?.getBoundingClientRect();
-        return last ? node.getBoundingClientRect().bottom - last.bottom : -1;
+        return {
+          gap: node.scrollHeight - node.scrollTop - node.clientHeight,
+          visibleBottom: last ? node.getBoundingClientRect().bottom - last.bottom : -1,
+        };
       });
+      expect(gap).toBeLessThanOrEqual(1);
       expect(visibleBottom).toBeGreaterThanOrEqual(6);
     }
     await page.screenshot({

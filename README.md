@@ -1,86 +1,81 @@
 # Chat with PDF — Frontend
 
-A colorful, neo-brutalist PDF workspace built with Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, TanStack Query v5, Axios, MSW, and React-PDF.
+Next.js 16 / React 19 PDF workspace, using Axios, TanStack Query, MSW, React-PDF, and the NestJS backend contract.
 
-The current build is a **standalone frontend demo**. It includes navigation, document management, chat interactions, source citations, and a PDF viewer. AI responses and uploads are mocked; no production backend or LLM is connected.
+The same UI supports two modes:
 
-## Start
+| Mode          | API                               | Data                                                               |
+| ------------- | --------------------------------- | ------------------------------------------------------------------ |
+| Vercel / demo | MSW intercepts `/api/*`           | Simulated chat; browser-persistent documents, sessions and account |
+| Local         | NestJS at `http://localhost:3000` | Real auth, MinIO/BullMQ uploads, AI SSE, chat, and documents       |
 
-Requires Bun 1.4 or later.
+## Run
+
+Requires Bun 1.4+ (or Node 24+).
 
 ```bash
 bun install
-bun run dev
+cp .env.example .env.local
+bun run dev -- --port 3001
 ```
 
-Open <http://localhost:3000>. Try `/documents`, `/trash`, and `/chats/session-1` for a seeded conversation with citations.
+The demo defaults to:
 
-The demo API is enabled by default. Copy `.env.example` to `.env.local` if you want to configure it. For a real backend, set `NEXT_PUBLIC_API_MOCKING=disabled` and `NEXT_PUBLIC_API_URL` to the API origin. The frontend expects the response contracts defined in the feature API modules.
+```dotenv
+NEXT_PUBLIC_API_MOCKING=enabled
+NEXT_PUBLIC_API_URL=/api
+```
 
-## Commands
+The workspace opens directly at `/` as Guest. Simply viewing or navigating does not create an account. The first **Send Chat** or **Upload PDF** restores an existing refresh session or creates an anonymous user via `POST /auth/guest`. Guest chats/PDFs persist within the current browser. Register upgrades the same guest user (keeping chats and PDFs); logging into a different existing account does not import guest data.
+
+The demo account is still available: **demo** / **demo12345**. Demo accounts and guest workspaces are stored separately in browser localStorage; uploaded PDF binaries use IndexedDB. These browser-local records are not synchronized across devices.
+
+To connect a local NestJS server:
+
+```dotenv
+NEXT_PUBLIC_API_MOCKING=disabled
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+Run the backend on port 3000 and the frontend on port 3001, with `FRONTEND_ORIGINS=http://localhost:3001` in the NestJS environment. The backend has **no** global `/api` prefix. The refresh token is an HttpOnly cookie; the frontend holds the access token in memory, refreshes it on reload, and retries a single unauthorized request after refresh. Queries for personal data remain disabled until a valid user session exists.
+
+> `NEXT_PUBLIC_*` variables are embedded during a Next.js build. Give Vercel the demo values and rebuild after changing them.
+
+## Integrated operations
+
+| Screen               | Backend endpoints                                                                                                                                                                                        |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth/account         | `/auth/guest`, `/auth/register`, `/auth/login`, `/auth/profile`, `/session/refresh`, `/auth/logout`, `/auth/logout-all`                                                                                  |
+| Chat sidebar / Trash | `GET /chat-sessions`, `GET /chat-sessions/deleted`, `PATCH /chat-sessions/:id`, DELETE / restore / permanent                                                                                             |
+| Chat messages        | `GET /chat/:id/details`, `POST /chat/send`, `POST /chat/:messageId/edit`, `POST /chat/:messageId/regenerate`, `POST /chat/:id/fork`, `PATCH /chat/:messageId/activate`, `POST /chat/:messageId/feedback` |
+| Documents / Trash    | `GET /documents`, `GET /documents/deleted`, `GET /documents/:id`, DELETE / restore / permanent                                                                                                           |
+| Upload               | `POST /document-upload/presigned-url` → signed PUT → `POST /document-upload/:id/process` → poll `GET /documents/:id`                                                                                     |
+
+Chat generations stream `started`, `sources`, `token`, `done`, and `error` events, with partial text displayed while the response arrives. The active branch (including feedback, sources and versions) comes from the chat detail endpoint. PDF preview retrieves a signed GET URL on demand.
+
+**Backend integration dependencies:** at the time of this frontend implementation, the inspected BE `master` declares `q/order` in the query DTO but the list services do not apply them; documents also ignore the requested sort field. These UI controls send the expected query parameters and work in MSW, but real search/sorting awaits the corresponding BE service changes. Permanent deletion keeps tombstone metadata/relations; a deleted PDF cannot be previewed. Processing retry is intentionally not implemented.
+
+## Project layout
+
+```text
+src/app/               App Router pages and workspace layout
+src/components/        Screen-oriented UI, auth modal and PDF viewer
+src/features/          Per-domain API, query and mutation modules
+src/interface/         Frontend models / web response types
+src/lib/               Axios auth/refresh, SSE parser, uploaded PDF storage
+src/mocks/data/        Browser-persistent demo state and fixtures
+src/mocks/handlers/    NestJS-compatible HTTP and SSE handlers
+src/providers/         Query, auth and MSW readiness providers
+```
+
+## Verification
 
 ```bash
 bun run typecheck
 bun run lint
-bun run format:check   # Validate consistent formatting
-bun run format         # Format source files
-bun run lint:fix       # Fix automatically repairable lint issues
-bun run test           # Bun tests for MSW contracts
+bun run test
 bun run build
-bun run test:e2e       # Requires Playwright Chromium
-bun run generate:pdf   # Regenerate committed sample PDFs
+bun run test:e2e
 ```
 
-`postinstall` copies the matching `pdfjs-dist` worker into `public/`, avoiding a separate CDN worker version.
-
-ESLint enforces Next.js, React, and TypeScript rules. Prettier handles code layout (including JSX and CSS). The CI workflow checks both; generated files and PDF fixtures are excluded from formatting.
-
-## Architecture
-
-```text
-src/
-  app/
-    layout.tsx                      Root providers
-    (workspace)/layout.tsx          Persistent shared sidebar + main
-    (workspace)/page.tsx            New conversation
-    (workspace)/chats/[sessionId]/page.tsx
-    (workspace)/documents/page.tsx
-    (workspace)/trash/page.tsx
-  components/
-    chat/                          Chat screen, composer, messages, dialogs
-    documents/                     Document screens and actions
-    sidebar/                       Shared navigation and session dialogs
-    pdf/                           PDF viewer and preview
-    ui/                            shadcn primitives
-  features/
-    chat/                          chat.api, chat.query, chat.mutation
-    chat-session/                  chat-session.api, .query, .mutation
-    document/                      document.api, .query, .mutation
-    document-upload/               document-upload.api, .mutation
-  interface/                       Shared domain and API response types
-  hooks/                           Reusable UI hooks
-  stores/                          Client-only UI preferences and drafts
-  mocks/data/                      Seeded worker-memory data
-  mocks/handlers/                  MSW endpoints by domain
-  lib/axios.ts                     One configured Axios instance
-  providers/                       Mock readiness and query providers
-  styles/                          App styles
-```
-
-The sidebar is mounted **once** in the shared route layout. Page transitions use actual App Router URLs; no `?page=` or giant client-side page switcher is involved.
-
-UI components follow the screen-oriented separation used in `dam-creamy-cream`; feature API/query/mutation modules follow the conventions in `habit-sharper`. The app still guards initial queries until MSW is ready to avoid a service-worker race.
-
-## Demo behaviors and limitations
-
-- 12 sample PDFs are included for preview, download, page navigation, zoom, and current-page text highlighting. These PDFs are synthetic examples, not real financial reports.
-- Documents support grid/list, search, sorting, pagination, and soft delete. Trash supports independent chat/document pagination, restore, and confirmed permanent deletion.
-- Chat supports session routing, editing user questions, feedback, copying responses, multi-select library attachments, PDF upload, two answer modes, and clickable citations.
-- Desktop preview is resizable; the side panel is constrained to 20–40%. Tablet/mobile use a full-screen PDF overlay and a sidebar drawer.
-- MSW data is held in service-worker memory and may reset when the worker restarts. Uploaded file metadata can be previewed only during the same browser session through an object URL. The application does **not** promise persistent storage.
-- Chat responses, analysis status, and document citations are simulated. Replace the mock handlers with your NestJS endpoints to enable real RAG responses and storage.
-- The print action opens the PDF in the browser's PDF viewer; printing is then handled by the browser.
-
-## Testing
-
-Unit/API tests exercise document pagination, independent Trash lists, and chat create/delete/restore. Playwright tests cover routing, document grid/list/search, citation preview, and mobile overflow. Browser tests require Playwright Chromium to be installed with `bunx playwright install chromium`.
+Playwright tests require Chromium (`bunx playwright install chromium`) and exercise the production build. Real-backend end-to-end testing additionally requires PostgreSQL, Redis, MinIO, Milvus and the configured AI provider.

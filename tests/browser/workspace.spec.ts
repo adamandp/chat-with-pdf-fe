@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("shared sidebar and real App Router navigation", async ({ page }) => {
   await page.goto("/");

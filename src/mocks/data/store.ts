@@ -5,23 +5,91 @@ import { documents, deletedDocuments } from "./documents";
 import { sessions, deletedSessions } from "./sessions";
 import { messages } from "./messages";
 
-/** Worker-memory demo data; mutations reset after the service worker stops. */
+const legacyStorageKey = "chat-with-pdf:demo-workspace:v2";
+const storagePrefix = "chat-with-pdf:demo-workspace:v3:";
+export const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
+
+interface SavedStore {
+  sessions: Session[];
+  documents: PdfDocument[];
+  messages: ChatMessage[];
+}
+
+function emptyWorkspace(): SavedStore {
+  return { sessions: [], documents: [], messages: [] };
+}
+
+function initialData(userId: string | null): SavedStore {
+  if (!userId) return emptyWorkspace();
+  if (typeof localStorage !== "undefined") {
+    try {
+      const saved =
+        localStorage.getItem(storagePrefix + userId) ||
+        (userId === DEMO_USER_ID ? localStorage.getItem(legacyStorageKey) : null);
+      if (saved) {
+        const result = JSON.parse(saved) as SavedStore;
+        if (
+          Array.isArray(result.sessions) &&
+          Array.isArray(result.documents) &&
+          Array.isArray(result.messages)
+        )
+          return result;
+      }
+    } catch {
+      // Corrupt demo data falls back to the bundled fixtures.
+    }
+  }
+  if (userId !== DEMO_USER_ID) return emptyWorkspace();
+  return {
+    sessions: [...sessions, ...deletedSessions],
+    documents: [...documents, ...deletedDocuments],
+    messages: [...messages],
+  };
+}
+
+/** Mock state survives reloads and Vercel redeploys in the same browser. */
+let workspaceOwner: string | null = DEMO_USER_ID;
 export const store: {
   sessions: Session[];
   documents: PdfDocument[];
   messages: ChatMessage[];
   uploadRecords: Map<string, { uploaded: boolean; processingAt: number | null }>;
 } = {
-  sessions: [...sessions, ...deletedSessions],
-  documents: [...documents, ...deletedDocuments],
-  messages: [...messages],
+  ...initialData(workspaceOwner),
   uploadRecords: new Map<string, { uploaded: boolean; processingAt: number | null }>(),
 };
 
+/** Each demo identity has its own storage namespace and in-memory state. */
+export function activateWorkspace(userId: string | null) {
+  if (workspaceOwner === userId) return;
+  const next = initialData(userId);
+  store.sessions = next.sessions;
+  store.documents = next.documents;
+  store.messages = next.messages;
+  store.uploadRecords.clear();
+  workspaceOwner = userId;
+}
+
+export function persistStore() {
+  if (typeof localStorage === "undefined" || !workspaceOwner) return;
+  try {
+    localStorage.setItem(
+      storagePrefix + workspaceOwner,
+      JSON.stringify({
+        sessions: store.sessions,
+        documents: store.documents,
+        messages: store.messages,
+      } satisfies SavedStore),
+    );
+  } catch {
+    // Storage quotas/private browsing must not break the active demo session.
+  }
+}
+
 export function paginate<T>(items: T[], page: number, pageSize: number) {
-  const size = Math.min(50, Math.max(1, pageSize || 6));
-  const totalPages = Math.max(1, Math.ceil(items.length / size));
-  const currentPage = Math.min(totalPages, Math.max(1, page || 1));
+  const size = Math.min(100, Math.max(1, pageSize || 10));
+  const totalPages = Math.ceil(items.length / size);
+  const currentPage = Math.max(1, page || 1);
   return {
     data: items.slice((currentPage - 1) * size, currentPage * size),
     paging: { currentPage, pageSize: size, totalItems: items.length, totalPages },

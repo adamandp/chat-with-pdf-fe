@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("session drafts remain independent through navigation and refresh", async ({ page }) => {
   await page.goto("/chats/session-1");

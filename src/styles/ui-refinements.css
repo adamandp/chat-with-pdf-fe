@@ -1,0 +1,451 @@
+/* Brand links retain the same layout while both logo and name navigate to New Chat. */
+.sidebar-brand-link {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+}
+.sidebar-brand-link:hover .sidebar-brand-title,
+.mobile-title:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.sidebar-brand-link:focus-visible,
+.mobile-title:focus-visible,
+.sidebar-desktop-toggle:focus-visible,
+.neo-action-trigger:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+.sidebar-desktop-toggle {
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+.sidebar-desktop-toggle:hover {
+  transform: translateY(-1px);
+}
+.sidebar-search {
+  min-width: 0;
+  width: 100%;
+}
+.sidebar.desktop-collapsed .sidebar-brand-link {
+  justify-content: center;
+  flex: none;
+}
+@media (min-width: 851px) {
+  .sidebar.desktop-collapsed .sidebar-desktop-toggle {
+    margin-inline: auto;
+    width: 39px;
+    height: 39px;
+    border: 2px solid #111;
+    border-radius: 8px;
+    background: var(--card);
+    box-shadow: 3px 4px 0 #111;
+  }
+}
+@media (max-width: 1200px) {
+  .sidebar-brand-link {
+    gap: 8px;
+  }
+}
+@media (max-width: 850px) {
+  /* The previous display:revert on .sidebar-collapse-hide turned this label
+     back into an inline element and split its border from the input. */
+  .sidebar .sidebar-search {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+  }
+  .sidebar-search input {
+    flex: 1 1 auto;
+  }
+  .sidebar-brand-link {
+    gap: 10px;
+  }
+}
+
+/* Shared neo-brutalist actions: single menu behavior for Documents and Trash. */
+.neo-action-trigger {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border: 2px solid #111;
+  border-radius: 9px;
+  background: #6bbdff;
+  color: #121824;
+  box-shadow: 3px 4px 0 #111;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease;
+}
+.neo-action-trigger:hover,
+.neo-action-trigger[data-popup-open] {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 3px 0 #111;
+}
+.document-row {
+  grid-template-columns: 66px minmax(0, 1fr) 125px 110px 150px 42px;
+}
+@media (max-width: 1200px) {
+  .document-row {
+    grid-template-columns: 55px minmax(0, 1fr) 100px 80px 42px;
+  }
+}
+@media (max-width: 620px) {
+  .document-row {
+    grid-template-columns: 46px minmax(0, 1fr) 42px;
+  }
+}
+[data-slot="dropdown-menu-content"].neo-action-menu {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 168px;
+  min-width: 168px;
+  padding: 10px;
+  border: 2px solid #111;
+  border-radius: 11px;
+  background: var(--card);
+  box-shadow: 4px 5px 0 #111;
+  overflow: visible;
+}
+[data-slot="dropdown-menu-content"].neo-action-menu[data-side="left"]::after {
+  content: "";
+  position: absolute;
+  right: -9px;
+  top: calc(50% - 7px);
+  width: 14px;
+  height: 14px;
+  transform: rotate(45deg);
+  background: var(--card);
+  border-top: 2px solid #111;
+  border-right: 2px solid #111;
+}
+.neo-action-item[data-slot="dropdown-menu-item"] {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 2px solid #111;
+  border-radius: 9px;
+  box-shadow: 2px 3px 0 #111;
+  color: #111820;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    filter 0.12s ease;
+}
+.neo-action-item[data-slot="dropdown-menu-item"]:is(:hover, :focus-visible) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 2px 0 #111;
+  filter: brightness(1.04);
+  color: #111820;
+}
+.neo-action-mint {
+  background: #70e5bf;
+}
+.neo-action-pink {
+  background: #ff7c96;
+}
+.neo-action-blue {
+  background: #85caff;
+}
+.neo-action-neutral {
+  background: #fffefa;
+}
+.dark .neo-action-trigger {
+  background: #6bbdff;
+  color: #111820;
+}
+.dark [data-slot="dropdown-menu-content"].neo-action-menu {
+  background: #343f51;
+}
+.dark [data-slot="dropdown-menu-content"].neo-action-menu[data-side="left"]::after {
+  background: #343f51;
+}
+.dark .neo-action-item[data-slot="dropdown-menu-item"] {
+  color: #111820;
+}
+.dark .neo-action-item[data-slot="dropdown-menu-item"]:is(:hover, :focus-visible) {
+  color: #111820;
+}
+.dark .neo-action-mint[data-slot="dropdown-menu-item"] {
+  background: #70e5bf;
+}
+.dark .neo-action-pink[data-slot="dropdown-menu-item"] {
+  background: #ff7c96;
+}
+.dark .neo-action-blue[data-slot="dropdown-menu-item"] {
+  background: #85caff;
+}
+.dark .neo-action-neutral[data-slot="dropdown-menu-item"] {
+  background: #fffefa;
+}
+
+/* Library picker follows the same focus, shadow and color system as the workspace. */
+.library-dialog {
+  color: var(--foreground);
+}
+.library-search {
+  background: var(--card);
+  color: var(--foreground);
+  border: 2px solid #111;
+}
+.library-search input {
+  color: inherit;
+  background: transparent;
+}
+.library-search input::placeholder {
+  color: var(--muted-foreground);
+}
+.library-search:focus-within {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+.library-item {
+  border-color: var(--input);
+  border-radius: 8px;
+}
+.library-item:hover,
+.library-item:focus-within {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.library-item.is-selected {
+  background: color-mix(in srgb, var(--accent) 58%, transparent);
+}
+.library-item input[type="checkbox"] {
+  cursor: pointer;
+  flex: none;
+}
+.library-footer {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--input);
+  padding-top: 14px;
+}
+.library-done {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 9px 19px;
+  font-size: 14px;
+  color: #111820;
+}
+.dark .library-done.neo-button.blue {
+  background: #6bbdff;
+  color: #111820;
+}
+
+/* Account details appear in the account popup itself, without exposing user IDs. */
+.account-popover {
+  width: min(365px, calc(100vw - 24px));
+  padding: 14px;
+  gap: 0;
+}
+.account-profile {
+  align-items: center;
+  gap: 11px;
+  padding-bottom: 13px;
+}
+.account-profile .account-avatar {
+  width: 48px;
+  height: 48px;
+}
+.account-profile-info strong {
+  font-size: 15px;
+  line-height: 1.3;
+}
+.account-profile-info small {
+  font-size: 12px;
+  margin-top: 2px;
+}
+.account-badge {
+  border: 2px solid #111;
+  border-radius: 6px;
+  background: #ffe665;
+  color: #111820;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 5px 7px;
+  box-shadow: 2px 2px 0 #111;
+}
+.account-section {
+  border-top: 1px solid var(--input);
+  padding: 11px 0 13px;
+}
+.account-section-label {
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  margin: 0 0 9px;
+}
+.account-details {
+  background: #f5f3ed;
+  border-radius: 9px;
+  padding: 1px 12px;
+}
+.account-details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+.account-details > div + div {
+  border-top: 1px solid #d8d6d0;
+}
+.account-details dt {
+  flex: none;
+  font-size: 12px;
+  color: #626a78;
+}
+.account-details dd {
+  min-width: 0;
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 800;
+}
+.account-appearance {
+  padding-bottom: 12px;
+}
+.account-setting-row {
+  padding-top: 0;
+  border-top: none;
+}
+.account-setting-copy {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.account-setting-copy strong {
+  font-size: 13px;
+}
+.theme-switch {
+  width: 51px;
+  height: 28px;
+}
+.theme-switch-thumb {
+  transition: none;
+}
+.theme-switch.is-on .theme-switch-thumb {
+  transform: none;
+}
+.theme-switch-glyph {
+  display: grid;
+  place-items: center;
+}
+.account-logout {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 43px;
+  padding: 10px 14px;
+  font-size: 14px;
+  background: var(--card);
+  color: var(--foreground);
+}
+.account-logout svg,
+.account-logout-all {
+  color: #f15e79;
+}
+.account-logout-all {
+  width: fit-content;
+  margin-top: 11px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.account-logout-all:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dark .account-details {
+  background: #283446;
+}
+.dark .account-details > div + div {
+  border-color: #506078;
+}
+.dark .account-details dt {
+  color: #d1dbe7;
+}
+.dark .account-details dd {
+  color: #f4f5f9;
+}
+.dark .account-section {
+  border-color: #6c788a;
+}
+.dark .account-logout {
+  color: #f4f5f9;
+}
+.dark .account-logout svg,
+.dark .account-logout-all {
+  color: #ff9dad;
+}
+
+/* Light callouts stay light; neutral controls adapt to dark navy. */
+.chat-suggestion {
+  color: var(--foreground);
+  transition: background-color 0.16s ease;
+}
+.chat-suggestion:hover {
+  background: #ffe665;
+  color: #111820;
+}
+.dark .chat-suggestion {
+  background: #3a475b;
+  color: #f6f9ff;
+  border-color: #10141c;
+}
+.dark .chat-suggestion:hover {
+  background: #ffe665;
+  color: #111820;
+}
+.dark .nav-link.active {
+  background: #9ac9ff;
+  color: #111820;
+}
+.dark .text-red-700 {
+  color: #ff9eab;
+}
+.dark .message-line .icon-button.bg-blue-200 {
+  color: #111820;
+  background-color: #9ac9ff;
+}
+.dark .pdf-related .text-slate-500 {
+  color: #d1dbe7;
+}
+.dark .pdf-related .bg-slate-50 {
+  background: #404f66;
+  color: #f4f5f9;
+}
+.dark .pdf-related .border-slate-300 {
+  border-color: #7789a3;
+}
+.dark .neo-action-neutral {
+  background: #fffefa;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-desktop-toggle,
+  .neo-action-trigger,
+  .neo-action-item,
+  .chat-suggestion {
+    transition: none;
+  }
+}

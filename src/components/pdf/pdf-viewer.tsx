@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -19,7 +19,8 @@ import {
   X,
 } from "lucide-react";
 import type { PdfDocument } from "@/interface/document.interface";
-import { getUploadedFileUrl } from "@/lib/uploaded-files";
+import { getRememberedUploadedFileUrl, getUploadedFileUrl } from "@/lib/uploaded-files";
+import { useDocument } from "@/features/document/document.query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,8 +56,28 @@ export function PdfViewer({
   const [query, setQuery] = useState("");
   const [showRelated, setShowRelated] = useState(false);
   const [localExpanded, setLocalExpanded] = useState(false);
+  const [rememberedUrl, setRememberedUrl] = useState<string>();
+  const {
+    data: signedDocument,
+    isLoading: loadingSignedUrl,
+    isError: signedUrlError,
+  } = useDocument(document.id, !document.url);
+  useEffect(() => {
+    let active = true;
+    if (!document.url) {
+      void getRememberedUploadedFileUrl(document.id)
+        .then((value) => {
+          if (active) setRememberedUrl(value);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [document.id, document.url]);
   const isExpanded = expanded || localExpanded;
-  const url = document.url || getUploadedFileUrl(document.id);
+  const url =
+    document.url || signedDocument?.url || rememberedUrl || getUploadedFileUrl(document.id);
   const safePage = Math.max(1, Math.min(page, pages));
   const nearby = Array.from({ length: Math.min(5, pages) }, (_, index) =>
     Math.min(pages, Math.max(1, safePage - 2) + index),
@@ -216,8 +237,11 @@ export function PdfViewer({
       ) : (
         <div className="pdf-canvas">
           <div className="rounded-md bg-white p-8 text-center text-muted">
-            This demo upload has metadata only. Connect object storage to preview uploaded PDFs
-            after reload.
+            {loadingSignedUrl
+              ? "Loading a secure PDF link…"
+              : signedUrlError
+                ? "This PDF is no longer available."
+                : "PDF preview is unavailable."}
           </div>
         </div>
       )}
