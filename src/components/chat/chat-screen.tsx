@@ -346,6 +346,7 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
             setThinking={setThinking}
             selectedIds={selectedIds}
             setSelectedIds={setSelectedIds}
+            uploadScope={sessionId || "new"}
             onSend={sendMessage}
             pending={streaming}
           />

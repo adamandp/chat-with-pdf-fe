@@ -13,6 +13,7 @@ interface SavedStore {
   sessions: Session[];
   documents: PdfDocument[];
   messages: ChatMessage[];
+  uploadRecords?: Record<string, { uploaded: boolean; processingAt: number | null }>;
 }
 
 function emptyWorkspace(): SavedStore {
@@ -49,14 +50,17 @@ function initialData(userId: string | null): SavedStore {
 
 /** Mock state survives reloads and Vercel redeploys in the same browser. */
 let workspaceOwner: string | null = DEMO_USER_ID;
+const initialWorkspace = initialData(workspaceOwner);
 export const store: {
   sessions: Session[];
   documents: PdfDocument[];
   messages: ChatMessage[];
   uploadRecords: Map<string, { uploaded: boolean; processingAt: number | null }>;
 } = {
-  ...initialData(workspaceOwner),
-  uploadRecords: new Map<string, { uploaded: boolean; processingAt: number | null }>(),
+  sessions: initialWorkspace.sessions,
+  documents: initialWorkspace.documents,
+  messages: initialWorkspace.messages,
+  uploadRecords: new Map(Object.entries(initialWorkspace.uploadRecords ?? {})),
 };
 
 /** Each demo identity has its own storage namespace and in-memory state. */
@@ -66,7 +70,7 @@ export function activateWorkspace(userId: string | null) {
   store.sessions = next.sessions;
   store.documents = next.documents;
   store.messages = next.messages;
-  store.uploadRecords.clear();
+  store.uploadRecords = new Map(Object.entries(next.uploadRecords ?? {}));
   workspaceOwner = userId;
 }
 
@@ -79,6 +83,7 @@ export function persistStore() {
         sessions: store.sessions,
         documents: store.documents,
         messages: store.messages,
+        uploadRecords: Object.fromEntries(store.uploadRecords),
       } satisfies SavedStore),
     );
   } catch {
