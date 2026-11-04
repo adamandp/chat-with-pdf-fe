@@ -132,7 +132,7 @@
   background: #ffe665;
   color: #111;
 }
-.dark .composer-option:hover {
+.dark .composer-option:not(:disabled):hover {
   color: white;
   background: #465872;
 }

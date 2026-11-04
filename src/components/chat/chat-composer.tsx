@@ -250,6 +250,7 @@ export function ChatComposer({
               <button
                 key={option.value}
                 className={`composer-option ${mode === option.value ? "selected" : ""}`}
+                disabled={option.value === "document" && selectedIds.length === 0}
                 onClick={() => {
                   setMode(option.value);
                   setModeOpen(false);
@@ -258,7 +259,11 @@ export function ChatComposer({
                 <option.icon size={18} />
                 <span className="flex-1">
                   <strong className="block text-sm">{option.name}</strong>
-                  <small className="text-muted">{option.description}</small>
+                  <small className="text-muted">
+                    {option.value === "document" && selectedIds.length === 0
+                      ? "Attach a PDF to enable"
+                      : option.description}
+                  </small>
                 </span>
                 {mode === option.value && <Check size={16} />}
               </button>

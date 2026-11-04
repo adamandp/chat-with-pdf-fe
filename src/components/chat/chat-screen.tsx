@@ -52,8 +52,6 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
   ];
   const [draft, setDraft] = useSessionDraft(sessionId);
   const [modeOverride, setMode] = useState<AnswerMode | null>(null);
-  const mode: AnswerMode =
-    modeOverride ?? (session?.answerMode === "general" ? "general" : "document");
   const [thinking, setThinking] = useState<ThinkingMode>("quick");
   const [selectedOverride, setSelectedOverride] = useState<string[] | null>(null);
   const selectedIds =
@@ -62,7 +60,16 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
       const document = detail?.documents.find((item) => item.id === id);
       return document && document.status === "READY" && !document.deletedAt;
     });
-  const setSelectedIds = setSelectedOverride;
+  const setSelectedIds = (ids: string[]) => {
+    if (ids.length === 0) setMode("general");
+    setSelectedOverride(ids);
+  };
+  // Document-only answers require an attached, ready PDF. Preserve the saved mode
+  // for existing chats that still have documents; new/empty chats use general.
+  const mode: AnswerMode =
+    selectedIds.length === 0
+      ? "general"
+      : (modeOverride ?? (session?.answerMode === "document_only" ? "document" : "general"));
   const [preview, setPreview] = useState<Preview | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(Boolean(sessionId));
