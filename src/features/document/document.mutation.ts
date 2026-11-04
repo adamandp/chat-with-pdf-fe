@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteDocument, restoreDocument } from "./document.api";
 import { documentKeys } from "./document.query";
+import { chatKeys } from "@/features/chat/chat.query";
 import { forgetUploadedFile } from "@/lib/uploaded-files";
 
 export function useDeleteDocument() {
@@ -14,7 +15,11 @@ export function useDeleteDocument() {
         await forgetUploadedFile(id).catch(() => {});
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentKeys.all }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: documentKeys.all }),
+        queryClient.invalidateQueries({ queryKey: chatKeys.all }),
+      ]),
   });
 }
 
@@ -22,6 +27,10 @@ export function useRestoreDocument() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: restoreDocument,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentKeys.all }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: documentKeys.all }),
+        queryClient.invalidateQueries({ queryKey: chatKeys.all }),
+      ]),
   });
 }

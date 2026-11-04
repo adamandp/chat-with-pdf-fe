@@ -8,6 +8,8 @@ import type { PdfDocument } from "@/interface/document.interface";
 import { formattedDate } from "@/lib/format";
 import { useDocuments } from "@/features/document/document.query";
 import { useDeleteDocument } from "@/features/document/document.mutation";
+import { useAuth } from "@/providers/auth-provider";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { PdfIcon } from "@/components/common/pdf-icon";
 import { Pagination } from "@/components/common/pagination";
 import { PdfPreviewDialog } from "@/components/pdf/pdf-preview-dialog";
@@ -29,17 +31,19 @@ import { Button } from "@/components/ui/button";
 import { DocumentActions } from "./document-actions";
 
 export function DocumentsScreen() {
+  const { user, loading: authLoading } = useAuth();
   const reduceMotion = useReducedMotion();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query);
   const [sort, setSort] = useState<"modified" | "name" | "pages">("modified");
   const [direction, setDirection] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
   const [preview, setPreview] = useState<PdfDocument | null>(null);
   const [toDelete, setToDelete] = useState<PdfDocument | null>(null);
-  const { data, isPending, isError, refetch } = useDocuments({
-    q: query,
+  const { data, isLoading, isError, refetch } = useDocuments({
+    q: debouncedQuery,
     sort,
     direction,
     page,
@@ -48,6 +52,8 @@ export function DocumentsScreen() {
   const { data: all } = useDocuments({ pageSize: 1 });
   const remove = useDeleteDocument();
   const count = all?.paging?.totalItems ?? data?.paging?.totalItems ?? 0;
+  const showingLoading = authLoading || isLoading;
+  const showingEmpty = !showingLoading && !isError && (!user || (data && data.data.length === 0));
   const options = [
     { value: "modified", label: "Last modified" },
     { value: "name", label: "Name" },
@@ -148,7 +154,7 @@ export function DocumentsScreen() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      {isPending && (
+      {showingLoading && (
         <div className="grid min-h-64 place-items-center text-muted" role="status">
           Loading documents...
         </div>
@@ -161,12 +167,18 @@ export function DocumentsScreen() {
           </button>
         </div>
       )}
-      {data && !data.data.length && (
+      {showingEmpty && (
         <div className="neo-card grid min-h-64 place-items-center p-10 text-center">
           <div>
             <FileText className="mx-auto mb-3 text-muted" size={42} />
-            <h2 className="text-xl font-bold">No documents found</h2>
-            <p className="text-muted">Try another search or upload a PDF from chat.</p>
+            <h2 className="text-xl font-bold">
+              {user ? "No documents found" : "Your library is empty"}
+            </h2>
+            <p className="text-muted">
+              {user
+                ? "Try another search or upload a PDF from chat."
+                : "Upload your first PDF from New Chat to get started."}
+            </p>
           </div>
         </div>
       )}

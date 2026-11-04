@@ -59,7 +59,7 @@ export function PdfViewer({
   const [rememberedUrl, setRememberedUrl] = useState<string>();
   const {
     data: signedDocument,
-    isPending: loadingSignedUrl,
+    isLoading: loadingSignedUrl,
     isError: signedUrlError,
   } = useDocument(document.id, !document.url);
   useEffect(() => {
