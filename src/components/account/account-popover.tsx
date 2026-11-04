@@ -2,10 +2,11 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import { ChevronUp, LogOut, Moon, Sun, UserRound } from "lucide-react";
+import { ChevronUp, LogIn, LogOut, Moon, Sun, UserPlus, UserRound } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import { useAuth } from "@/providers/auth-provider";
+import { AuthDialog } from "./auth-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
@@ -29,9 +30,17 @@ export function AccountPopover({ collapsed = false }: { collapsed?: boolean }) {
   const { user, logout } = useAuth();
   const mounted = useMounted();
   const reduceMotion = useReducedMotion();
+  const isGuest = !user || user.accountType === "GUEST";
   const dark = mounted && resolvedTheme === "dark";
   const [logoutMode, setLogoutMode] = useState<"current" | "all" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  function openAuth(mode: "login" | "register") {
+    setPopoverOpen(false);
+    setAuthMode(mode);
+  }
 
   async function confirmLogout() {
     if (!logoutMode) return;
@@ -49,7 +58,7 @@ export function AccountPopover({ collapsed = false }: { collapsed?: boolean }) {
 
   return (
     <>
-      <Popover>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger
           aria-label="Account settings"
           title="Account settings"
@@ -59,8 +68,8 @@ export function AccountPopover({ collapsed = false }: { collapsed?: boolean }) {
             <UserRound size={21} />
           </span>
           <span className="account-summary">
-            <strong>{user?.name || user?.username || "Account"}</strong>
-            <small>@{user?.username}</small>
+            <strong>{isGuest ? "Guest User" : user?.name || user?.username}</strong>
+            <small>{isGuest ? "Guest workspace" : `@${user?.username}`}</small>
           </span>
           <ChevronUp size={16} className="account-chevron" />
         </PopoverTrigger>
@@ -75,21 +84,21 @@ export function AccountPopover({ collapsed = false }: { collapsed?: boolean }) {
               <UserRound size={22} />
             </span>
             <span className="account-profile-info">
-              <strong>{user?.name || user?.username || "Account"}</strong>
-              <small>@{user?.username}</small>
+              <strong>{isGuest ? "Guest User" : user?.name || user?.username}</strong>
+              <small>{isGuest ? "Explore without signing in" : `@${user?.username}`}</small>
             </span>
-            <span className="account-badge">ACCOUNT</span>
+            <span className="account-badge">{isGuest ? "GUEST" : "ACCOUNT"}</span>
           </div>
           <div className="account-section">
             <p className="account-section-label">ACCOUNT INFO</p>
             <dl className="account-details">
               <div>
                 <dt>Full name</dt>
-                <dd>{user?.name || "—"}</dd>
+                <dd>{isGuest ? "Guest" : user?.name || "—"}</dd>
               </div>
               <div>
                 <dt>Username</dt>
-                <dd>{user?.username || "—"}</dd>
+                <dd>{isGuest ? "Not registered" : user?.username || "—"}</dd>
               </div>
             </dl>
           </div>
@@ -133,14 +142,38 @@ export function AccountPopover({ collapsed = false }: { collapsed?: boolean }) {
               </button>
             </div>
           </div>
-          <button className="neo-button account-logout" onClick={() => setLogoutMode("current")}>
-            <LogOut size={18} /> Log out
-          </button>
-          <button className="account-logout-all" onClick={() => setLogoutMode("all")}>
-            Log out all devices
-          </button>
+          {isGuest ? (
+            <div className="grid gap-2">
+              <p className="text-xs text-muted">
+                Register to keep your chats and PDFs accessible across devices.
+              </p>
+              <button className="neo-button pink account-logout" onClick={() => openAuth("register")}>
+                <UserPlus size={18} /> Create account
+              </button>
+              <button className="neo-button account-logout" onClick={() => openAuth("login")}>
+                <LogIn size={18} /> Log in
+              </button>
+            </div>
+          ) : (
+            <>
+              <button className="neo-button account-logout" onClick={() => setLogoutMode("current")}>
+                <LogOut size={18} /> Log out
+              </button>
+              <button className="account-logout-all" onClick={() => setLogoutMode("all")}>
+                Log out all devices
+              </button>
+            </>
+          )}
         </PopoverContent>
       </Popover>
+      <AuthDialog
+        key={authMode || "closed"}
+        initialView={authMode || "login"}
+        open={Boolean(authMode)}
+        onOpenChange={(open) => {
+          if (!open) setAuthMode(null);
+        }}
+      />
       <Dialog
         open={Boolean(logoutMode)}
         onOpenChange={(open) => {

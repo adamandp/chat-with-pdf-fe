@@ -5,7 +5,9 @@ import { documents, deletedDocuments } from "./documents";
 import { sessions, deletedSessions } from "./sessions";
 import { messages } from "./messages";
 
-const storageKey = "chat-with-pdf:demo-workspace:v2";
+const legacyStorageKey = "chat-with-pdf:demo-workspace:v2";
+const storagePrefix = "chat-with-pdf:demo-workspace:v3:";
+export const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 interface SavedStore {
   sessions: Session[];
@@ -13,10 +15,17 @@ interface SavedStore {
   messages: ChatMessage[];
 }
 
-function initialData(): SavedStore {
+function emptyWorkspace(): SavedStore {
+  return { sessions: [], documents: [], messages: [] };
+}
+
+function initialData(userId: string | null): SavedStore {
+  if (!userId) return emptyWorkspace();
   if (typeof localStorage !== "undefined") {
     try {
-      const saved = localStorage.getItem(storageKey);
+      const saved =
+        localStorage.getItem(storagePrefix + userId) ||
+        (userId === DEMO_USER_ID ? localStorage.getItem(legacyStorageKey) : null);
       if (saved) {
         const result = JSON.parse(saved) as SavedStore;
         if (
@@ -30,6 +39,7 @@ function initialData(): SavedStore {
       // Corrupt demo data falls back to the bundled fixtures.
     }
   }
+  if (userId !== DEMO_USER_ID) return emptyWorkspace();
   return {
     sessions: [...sessions, ...deletedSessions],
     documents: [...documents, ...deletedDocuments],
@@ -38,21 +48,33 @@ function initialData(): SavedStore {
 }
 
 /** Mock state survives reloads and Vercel redeploys in the same browser. */
+let workspaceOwner: string | null = DEMO_USER_ID;
 export const store: {
   sessions: Session[];
   documents: PdfDocument[];
   messages: ChatMessage[];
   uploadRecords: Map<string, { uploaded: boolean; processingAt: number | null }>;
 } = {
-  ...initialData(),
+  ...initialData(workspaceOwner),
   uploadRecords: new Map<string, { uploaded: boolean; processingAt: number | null }>(),
 };
 
+/** Each demo identity has its own storage namespace and in-memory state. */
+export function activateWorkspace(userId: string | null) {
+  if (workspaceOwner === userId) return;
+  const next = initialData(userId);
+  store.sessions = next.sessions;
+  store.documents = next.documents;
+  store.messages = next.messages;
+  store.uploadRecords.clear();
+  workspaceOwner = userId;
+}
+
 export function persistStore() {
-  if (typeof localStorage === "undefined") return;
+  if (typeof localStorage === "undefined" || !workspaceOwner) return;
   try {
     localStorage.setItem(
-      storageKey,
+      storagePrefix + workspaceOwner,
       JSON.stringify({
         sessions: store.sessions,
         documents: store.documents,

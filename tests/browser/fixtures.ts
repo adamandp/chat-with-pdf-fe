@@ -5,6 +5,8 @@ export const test = base.extend<{ authenticated: void }>({
   authenticated: [
     async ({ page }, use) => {
       await page.goto("/");
+      await page.getByRole("button", { name: "Account settings" }).click();
+      await page.getByRole("button", { name: "Log in", exact: true }).click();
       await page.getByRole("textbox", { name: "Username" }).fill("demo");
       await page.getByLabel("Password").fill("demo12345");
       await page.getByRole("button", { name: "Login", exact: true }).click();

@@ -9,6 +9,7 @@ import { useSessions } from "@/features/chat-session/chat-session.query";
 import { useDeleteSession, useRestoreSession } from "@/features/chat-session/chat-session.mutation";
 import { useDocuments } from "@/features/document/document.query";
 import { useDeleteDocument, useRestoreDocument } from "@/features/document/document.mutation";
+import { useAuth } from "@/providers/auth-provider";
 import { PdfIcon } from "@/components/common/pdf-icon";
 import { NeoActionMenu } from "@/components/common/neo-action-menu";
 import { Pagination } from "@/components/common/pagination";
@@ -25,20 +26,26 @@ import { Button } from "@/components/ui/button";
 type DeleteTarget = { type: "chat" | "document"; id: string; title: string };
 
 export function TrashScreen() {
+  const { user, loading: authLoading } = useAuth();
   const reduceMotion = useReducedMotion();
   const [chatPage, setChatPage] = useState(1);
   const [chatPageSize, setChatPageSize] = useState(4);
   const [documentPageSize, setDocumentPageSize] = useState(4);
   const [documentPage, setDocumentPage] = useState(1);
   const [toDelete, setToDelete] = useState<DeleteTarget | null>(null);
-  const { data: chatResponse, isPending: chatsPending } = useSessions(
-    true,
-    "",
-    chatPage,
-    chatPageSize,
-  );
+  const {
+    data: chatResponse,
+    isLoading: chatsLoading,
+    isError: chatsError,
+    refetch: refetchChats,
+  } = useSessions(true, "", chatPage, chatPageSize);
   const chats = chatResponse?.data || [];
-  const { data: documents, isPending: documentsPending } = useDocuments({
+  const {
+    data: documents,
+    isLoading: documentsLoading,
+    isError: documentsError,
+    refetch: refetchDocuments,
+  } = useDocuments({
     deleted: true,
     page: documentPage,
     pageSize: documentPageSize,
@@ -97,8 +104,18 @@ export function TrashScreen() {
             <p className="text-muted">Deleted chats are stored here</p>
           </div>
         </div>
-        {chatsPending && <p className="py-10 text-center text-muted">Loading deleted chats…</p>}
-        {!chatsPending && chats.length === 0 && (
+        {(authLoading || chatsLoading) && (
+          <p className="py-10 text-center text-muted">Loading deleted chats…</p>
+        )}
+        {chatsError && (
+          <p role="alert" className="py-10 text-center text-muted">
+            Could not load deleted chats.{" "}
+            <button className="font-bold underline" onClick={() => void refetchChats()}>
+              Retry
+            </button>
+          </p>
+        )}
+        {!authLoading && !chatsLoading && !chatsError && chats.length === 0 && (
           <p className="py-10 text-center text-muted">No deleted chats.</p>
         )}
         {chats.map((chat, index) => (
@@ -162,12 +179,23 @@ export function TrashScreen() {
             <p className="text-muted">Deleted documents are stored here</p>
           </div>
         </div>
-        {documentsPending && (
+        {(authLoading || documentsLoading) && (
           <p className="py-10 text-center text-muted">Loading deleted documents…</p>
         )}
-        {documents && !documents.data.length && (
-          <p className="py-10 text-center text-muted">No deleted documents.</p>
+        {documentsError && (
+          <p role="alert" className="py-10 text-center text-muted">
+            Could not load deleted documents.{" "}
+            <button className="font-bold underline" onClick={() => void refetchDocuments()}>
+              Retry
+            </button>
+          </p>
         )}
+        {!authLoading &&
+          !documentsLoading &&
+          !documentsError &&
+          (!user || (documents && documents.data.length === 0)) && (
+            <p className="py-10 text-center text-muted">No deleted documents.</p>
+          )}
         {documents?.data.map((doc, index) => (
           <motion.div
             className="history-row"

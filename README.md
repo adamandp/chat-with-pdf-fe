@@ -26,7 +26,9 @@ NEXT_PUBLIC_API_MOCKING=enabled
 NEXT_PUBLIC_API_URL=/api
 ```
 
-Log in with **demo** / **demo12345**, or register a demo user. Demo records persist across refreshes in browser localStorage; uploaded PDF binaries use IndexedDB. They are local to that browser, not shared with other devices or users.
+The workspace opens directly at `/` as Guest. Simply viewing or navigating does not create an account. The first **Send Chat** or **Upload PDF** restores an existing refresh session or creates an anonymous user via `POST /auth/guest`. Guest chats/PDFs persist within the current browser. Register upgrades the same guest user (keeping chats and PDFs); logging into a different existing account does not import guest data.
+
+The demo account is still available: **demo** / **demo12345**. Demo accounts and guest workspaces are stored separately in browser localStorage; uploaded PDF binaries use IndexedDB. These browser-local records are not synchronized across devices.
 
 To connect a local NestJS server:
 
@@ -35,7 +37,7 @@ NEXT_PUBLIC_API_MOCKING=disabled
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
-Run the backend on port 3000 and the frontend on port 3001, with `FRONTEND_ORIGINS=http://localhost:3001` in the NestJS environment. The backend has **no** global `/api` prefix. The refresh token is an HttpOnly cookie; the frontend holds the access token in memory, refreshes it on reload, and retries a single unauthorized request after refresh.
+Run the backend on port 3000 and the frontend on port 3001, with `FRONTEND_ORIGINS=http://localhost:3001` in the NestJS environment. The backend has **no** global `/api` prefix. The refresh token is an HttpOnly cookie; the frontend holds the access token in memory, refreshes it on reload, and retries a single unauthorized request after refresh. Queries for personal data remain disabled until a valid user session exists.
 
 > `NEXT_PUBLIC_*` variables are embedded during a Next.js build. Give Vercel the demo values and rebuild after changing them.
 
@@ -43,7 +45,7 @@ Run the backend on port 3000 and the frontend on port 3001, with `FRONTEND_ORIGI
 
 | Screen               | Backend endpoints                                                                                                                                                                                        |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Auth/account         | `/auth/register`, `/auth/login`, `/auth/profile`, `/session/refresh`, `/auth/logout`, `/auth/logout-all`                                                                                                 |
+| Auth/account         | `/auth/guest`, `/auth/register`, `/auth/login`, `/auth/profile`, `/session/refresh`, `/auth/logout`, `/auth/logout-all`                                                                                  |
 | Chat sidebar / Trash | `GET /chat-sessions`, `GET /chat-sessions/deleted`, `PATCH /chat-sessions/:id`, DELETE / restore / permanent                                                                                             |
 | Chat messages        | `GET /chat/:id/details`, `POST /chat/send`, `POST /chat/:messageId/edit`, `POST /chat/:messageId/regenerate`, `POST /chat/:id/fork`, `PATCH /chat/:messageId/activate`, `POST /chat/:messageId/feedback` |
 | Documents / Trash    | `GET /documents`, `GET /documents/deleted`, `GET /documents/:id`, DELETE / restore / permanent                                                                                                           |

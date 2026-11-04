@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LockKeyhole, UserRound } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
@@ -13,9 +14,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export function AuthDialog() {
+export function AuthDialog({
+  open,
+  onOpenChange,
+  initialView = "login",
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialView?: "login" | "register";
+}) {
   const { login, register } = useAuth();
-  const [view, setView] = useState<"login" | "register">("login");
+  const router = useRouter();
+  const [view, setView] = useState<"login" | "register">(initialView);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -29,6 +39,8 @@ export function AuthDialog() {
       if (view === "login") await login({ username, password });
       else await register({ username, password, ...(name.trim() ? { name: name.trim() } : {}) });
       toast.success(view === "login" ? "Welcome back!" : "Account created");
+      onOpenChange(false);
+      if (view === "login") router.replace("/");
     } catch (cause) {
       const error = cause as { response?: { data?: { message?: string } }; message?: string };
       toast.error(error.response?.data?.message || error.message || "Authentication failed");
@@ -38,8 +50,7 @@ export function AuthDialog() {
   }
 
   return (
-    <div className="grid min-h-dvh place-items-center bg-[#fff6df]">
-      <Dialog open onOpenChange={() => {}}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           showCloseButton={false}
           className="neo-card w-[min(430px,calc(100vw-24px))] max-w-none border-2 border-black bg-white p-6 shadow-[6px_6px_0_#111]"
@@ -125,6 +136,5 @@ export function AuthDialog() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
   );
 }

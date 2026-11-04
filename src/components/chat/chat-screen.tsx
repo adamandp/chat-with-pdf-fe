@@ -17,6 +17,7 @@ import {
 } from "@/features/chat/chat.mutation";
 import { useForkSession } from "@/features/chat-session/chat-session.mutation";
 import { useDocuments } from "@/features/document/document.query";
+import { useAuth } from "@/providers/auth-provider";
 import { ChatHeader } from "./chat-header";
 import { ChatMessage } from "./chat-message";
 import { ChatComposer } from "./chat-composer";
@@ -36,11 +37,12 @@ export function ChatScreen({ sessionId }: { sessionId?: string }) {
 }
 
 function ChatScreenContent({ sessionId }: { sessionId?: string }) {
+  const { user, loading: authLoading } = useAuth();
   const reduceMotion = useReducedMotion();
   const router = useRouter();
   const { data: session, isError: sessionError } = useSession(sessionId);
   const { data: detail } = useChatDetail(sessionId);
-  const { data: messages = [], isPending: messagesPending } = useMessages(sessionId);
+  const { data: messages = [], isLoading: messagesLoading } = useMessages(sessionId);
   const { data: documentResponse } = useDocuments({ pageSize: 100 });
   const allDocuments = [
     ...(documentResponse?.data || []),
@@ -74,6 +76,7 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
   const activate = useActivateVersion();
   const [streamed, setStreamed] = useState("");
   const streaming = send.isPending || edit.isPending || regenerate.isPending;
+  const historyNeedsSession = Boolean(sessionId) && !authLoading && !user;
 
   // Scroll only the chat thread. scrollIntoView() also scrolls outer ancestors on iOS,
   // which caused the banner to overlap messages and shift the viewport.
@@ -236,9 +239,14 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
               Chat not found or was deleted.
             </p>
           )}
-          {sessionId && messagesPending && (
+          {sessionId && (authLoading || messagesLoading) && (
             <p role="status" className="p-10 text-center text-muted">
               Loading conversation...
+            </p>
+          )}
+          {historyNeedsSession && (
+            <p role="status" className="p-10 text-center text-muted">
+              Sign in from Account settings to view this conversation, or start a new chat.
             </p>
           )}
           {!sessionId && (
@@ -321,18 +329,20 @@ function ChatScreenContent({ sessionId }: { sessionId?: string }) {
             </div>
           )}
         </div>
-        <ChatComposer
-          draft={draft}
-          setDraft={setDraft}
-          mode={mode}
-          setMode={setMode}
-          thinking={thinking}
-          setThinking={setThinking}
-          selectedIds={selectedIds}
-          setSelectedIds={setSelectedIds}
-          onSend={sendMessage}
-          pending={streaming}
-        />
+        {(!sessionId || (!authLoading && user)) && (
+          <ChatComposer
+            draft={draft}
+            setDraft={setDraft}
+            mode={mode}
+            setMode={setMode}
+            thinking={thinking}
+            setThinking={setThinking}
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+            onSend={sendMessage}
+            pending={streaming}
+          />
+        )}
       </div>
       {preview && (
         <>

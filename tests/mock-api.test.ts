@@ -46,7 +46,41 @@ describe("backend-compatible MSW contracts", () => {
     await post("/auth/logout", {});
   });
 
+  test("guest is created lazily, reused, and upgraded without changing user ID", async () => {
+    const initial = await post("/session/refresh", {});
+    expect(initial.status).toBe(401);
+
+    const created = await post("/auth/guest", {});
+    expect(created.status).toBe(200);
+    const guest = (await (await fetch(api + "/auth/profile")).json()) as {
+      data: { id: string; username: null; accountType: string };
+    };
+    expect(guest.data.accountType).toBe("GUEST");
+    expect(guest.data.username).toBeNull();
+
+    await post("/auth/guest", {});
+    const reused = (await (await fetch(api + "/auth/profile")).json()) as {
+      data: { id: string };
+    };
+    expect(reused.data.id).toBe(guest.data.id);
+
+    const registration = await post("/auth/register", {
+      username: "upgraded_guest",
+      password: "Example12345",
+    });
+    expect(registration.status).toBe(201);
+    expect((await post("/session/refresh", {})).status).toBe(401);
+    await post("/auth/login", { username: "upgraded_guest", password: "Example12345" });
+    const upgraded = (await (await fetch(api + "/auth/profile")).json()) as {
+      data: { id: string; accountType: string };
+    };
+    expect(upgraded.data.id).toBe(guest.data.id);
+    expect(upgraded.data.accountType).toBe("REGISTERED");
+    await post("/auth/logout", {});
+  });
+
   test("session search, server pagination, pin and restore", async () => {
+    await post("/auth/login", { username: "demo", password: "demo12345" });
     const list = await fetch(api + "/chat-sessions?limit=2&page=1&q=report");
     const result = (await list.json()) as {
       data: { id: string }[];

@@ -13,6 +13,7 @@ import { chatKeys } from "./chat.query";
 import type { ThinkingMode } from "@/interface/chat.interface";
 import type { StreamEvent } from "@/lib/sse";
 import { sessionKeys } from "@/features/chat-session/chat-session.query";
+import { useAuth } from "@/providers/auth-provider";
 
 function useChatInvalidation() {
   const queryClient = useQueryClient();
@@ -24,8 +25,12 @@ function useChatInvalidation() {
 
 export function useSendChat() {
   const invalidate = useChatInvalidation();
+  const { ensureSession } = useAuth();
   return useMutation({
-    mutationFn: sendChat,
+    mutationFn: async (input: SendChatInput) => {
+      await ensureSession();
+      return sendChat(input);
+    },
     onSuccess: (detail) => invalidate(detail.session.id),
   });
 }
