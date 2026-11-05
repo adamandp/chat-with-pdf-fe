@@ -41,6 +41,34 @@ Run the backend on port 3000 and the frontend on port 3001, with `FRONTEND_ORIGI
 
 > `NEXT_PUBLIC_*` variables are embedded during a Next.js build. Give Vercel the demo values and rebuild after changing them.
 
+## Docker
+
+Build and run the production frontend (demo mode, no backend required):
+
+```bash
+docker build -t chat-with-pdf-fe .
+docker run -d --name chat-with-pdf-fe -p 3001:3000 chat-with-pdf-fe
+```
+
+Open http://localhost:3001. The container runs as a non-root user and includes a health check.
+
+For a real backend, set the browser-accessible API URL at build time:
+
+```bash
+docker build -t chat-with-pdf-fe \
+  --build-arg NEXT_PUBLIC_API_MOCKING=disabled \
+  --build-arg NEXT_PUBLIC_API_URL=http://localhost:3000 .
+```
+
+`NEXT_PUBLIC_*` values are embedded in the browser bundle; rebuild the image to change them.
+The backend must allow `http://localhost:3001` in its CORS origins.
+
+```bash
+docker logs chat-with-pdf-fe
+docker stop chat-with-pdf-fe
+docker rm chat-with-pdf-fe
+```
+
 ## Integrated operations
 
 | Screen               | Backend endpoints                                                                                                                                                                                        |
